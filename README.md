@@ -19,3 +19,4 @@
 - **Current Progress:**
   - [x] Milestone 1 & 2 completed and exported in `A's Negosyo POS.html`
   - [ ] Milestone 3 (Live Supabase SQL + Vite packaging + Thermal Bluetooth print + UI polish) & Vercel deployment
+"Continue my project A's Negosyo POS. Read my GitHub repo at https://github.com (check README.md, PROMPT.md, and A's Negosyo POS.html) so we can continue from where we stopped."
