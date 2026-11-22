@@ -86,5 +86,24 @@ Please update the Authentication, Sign-Up, and Store Setup flow in **A's Negosyo
 
 5. **Database & Demo Support:**
    - Include a working interactive simulation of the 8-digit SMS/Email verification code and unique username check inside the React preview so I can test the full sign-up flow on my phone right now, and include the `UNIQUE` username & phone constraints in our Milestone 3 Supabase SQL schema.
+   - Good call—let's switch the SMS and Email verification code to **6 digits** so it matches Supabase Auth's default OTP out of the box!
+
+Please update the verification code to **6 digits** and now proceed to build **Milestone 3** to make **A's Negosyo POS** completely live-ready:
+
+1. **Thermal Receipt Printer Support (58mm & 80mm):**
+   - Add dedicated **`@media print` thermal receipt CSS** formatted cleanly for both **58mm** and **80mm** thermal paper rolls (with a paper-width toggle in Store Settings).
+   - Add a **1-Tap Direct Bluetooth Thermal Printer (Web Bluetooth API + ESC/POS commands)** button on the receipt modal so Android/Chrome users can pair standard Bluetooth thermal printers (like Goojprt PT-210 / Xprinter) and print directly in 1 tap—make Direct Bluetooth Printing a **Negosyo Lite (₱199/mo)+** perk, while keeping standard browser/system print available for Free Starter users.
+
+2. **Complete Supabase PostgreSQL SQL Schema & Security:**
+   - Provide the full, copy-pasteable SQL script for Supabase covering all tables (`stores`, `profiles`, `products`, `orders`, `order_items`, `expenses`, `utang_ledger`, `staff_accounts`, `subscription_payments`, and `platform_settings` for my Super Admin PalawanPay QR Ph image).
+   - Include strict **`UNIQUE` constraints on `username` (max 8 alphanumeric chars) and `phone` (`+63` 10-digit format)** so usernames are permanently locked once claimed.
+   - Include strict **Row-Level Security (RLS)** policies isolating every seller's data by `owner_id`, plus Super Admin policies so only my admin account can view/approve `subscription_payments` and update `platform_settings`.
+   - Include **Supabase Storage** bucket setup & policies for Seller Payment QRs, Subscription Payment Screenshots, and the Super Admin PalawanPay QR Ph image.
+   - Include automatic plan expiry logic reverting expired paid accounts back to **Free Starter** once `plan_expires_at` passes.
+
+3. **Live Supabase Wiring & Mobile Vercel Deployment:**
+   - Update the React code to connect cleanly to live **Supabase Auth (6-digit Email/Phone OTP + Google/Apple OAuth), Database, and Storage** using environment variables (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`).
+   - Give me clear, **phone-friendly step-by-step instructions** to paste the SQL in Supabase, commit the final code to my GitHub repo `aw0aw0/A-s-Negosyo-POS`, and deploy live on **Vercel**.
+
 
 
