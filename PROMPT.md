@@ -104,6 +104,22 @@ Please update the verification code to **6 digits** and now proceed to build **M
 3. **Live Supabase Wiring & Mobile Vercel Deployment:**
    - Update the React code to connect cleanly to live **Supabase Auth (6-digit Email/Phone OTP + Google/Apple OAuth), Database, and Storage** using environment variables (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`).
    - Give me clear, **phone-friendly step-by-step instructions** to paste the SQL in Supabase, commit the final code to my GitHub repo `aw0aw0/A-s-Negosyo-POS`, and deploy live on **Vercel**.
+   - Before we deploy, please do a complete UI/UX visual upgrade on **A's Negosyo POS**:
+
+1. **Remove All Emojis:**
+   - Remove every single emoji across the entire app (navigation tabs, product placeholders, alerts, buttons, badges, and modals).
+   - Replace all emojis with clean, consistent **`lucide-react` stroke icons** (e.g., `Store`, `ScanLine`, `QrCode`, `Package`, `Receipt`, `Wallet`, `Users`, `ShieldCheck`, `Crown`).
+
+2. **Apply a Professional Fintech/Retail Color Palette (Color Theory):**
+   - Replace the dark/generic theme with a clean, high-contrast **Light Fintech Palette** optimized for store lighting and QR scanning:
+     - **App Background:** `#F8FAFC` (Slate-50)
+     - **Card Surfaces:** `#FFFFFF` with `#E2E8F0` (Slate-200) 1px borders
+     - **Primary Brand & Checkout Buttons:** Deep Emerald Teal `#0F766E` (hover `#115E59`)
+     - **Pro / Upgrade & Pending Highlights:** Warm Amber `#D97706` (with `#FEF3C7` soft badge background)
+     - **Primary Text:** `#0F172A` (Slate-900) and Secondary Text `#475569` (Slate-600)
+     - **Semantic Status Colors:** Success/Paid `#15803D`, Warning `#B45309`, Danger/Void `#B91C1C`
+   - Keep the seller's custom **Brand Accent Color** setting working so owners can still override the primary `#0F766E` accent with their own shop color if desired.
+
 
 
 
