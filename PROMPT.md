@@ -50,4 +50,41 @@ Great job on Milestone 1! Before moving to Milestone 2, please add one small UX 
 - Also add a **"Simulate Scan" demo dropdown/button** inside the Scan QR/Barcode modal so I can test scanning SKUs while inside the Claude preview (in addition to the live camera and USB scanner support).
 
 After applying those two small fixes, proceed directly to building **Milestone 2** (the 4-tier pricelist, feature paywalls, PalawanPay QR Ph & Maya `+639692692760` / `R A B` upgrade checkout, and the Super Admin `/admin` approval panel).
+Please update the Authentication, Sign-Up, and Store Setup flow in **A's Negosyo POS** with the following exact rules and validations:
+
+1. **Password Eye Icon Behavior:**
+   - Show the **Show/Hide Password eye icon** *only* when the user focuses/taps inside the password input box (or while it has text), keeping the field clean until clicked.
+
+2. **Shop Name Limit:**
+   - Enforce a strict **maximum of 30 characters/letters** (`maxLength={30}`) on the Shop/Store Name field during setup and in Store Settings, with a live character counter (e.g., `12/30`).
+
+3. **Sign-Up Options & 8-Digit Verification Flow:**
+   - Provide 4 clear sign-up options on the Auth screen:
+     1. **Continue with Google** (Supabase Google OAuth + fallback email verification flow)
+     2. **Continue with Apple ID** (Supabase Apple OAuth)
+     3. **Sign Up with Phone Number (`+63`):**
+        - Lock the default country code prefix to **`+63`** and allow **only 10 digits** starting with `9` (e.g., `9163498336`).
+        - Upon submitting, send an SMS (and display a simulated SMS banner in the preview) with a unique randomized **8-digit verification code**.
+        - **Verification Rule:** If the user enters an incorrect 8-digit code, display an error and **reset/restart the registration** from the beginning. Once verified, proceed to Username & Password creation.
+     4. **Use Other Email:**
+        - Validate that the user enters a **legitimate email format** (blocking disposable/fake formats).
+        - Send an email (and show a simulated email preview card in demo mode) with the exact wording:  
+          `"Welcome to A's Negosyo POS! This is your 8-digit verification code: [XXXXXXXX]"`
+        - **Verification Rule:** Same strict rule—if the 8-digit code is wrong, reset the registration so they must start again. Once verified, proceed to Username & Password creation.
+
+4. **Post-Verification Username & Password Creation (Required for All New Sign-Ups):**
+   - **Unique Username Rules:**
+     - **Maximum 8 characters** (`maxLength={8}`), **letters and numbers only** (`^[a-zA-Z0-9]+$`)—strictly block all spaces and special characters.
+     - Once created, **permanently lock that username** to the user's email/phone account in Supabase (`UNIQUE` constraint on `username` in the database) so no other user can ever claim or change it.
+   - **Password & Confirm Password Rules:**
+     - Display two input boxes labeled **`Password`** and **`Confirm Password`** (each with the focus-triggered eye icon).
+     - Enforce strict password validation:
+       - **Maximum 8 characters** (`maxLength={8}`)
+       - Must contain **at least 1 UPPERCASE (Caps Lock) letter** (`[A-Z]`)
+       - Must contain **at least 1 special character** (e.g., `!@#$%^&*`)
+       - Both `Password` and `Confirm Password` must match before activating their **A's Negosyo POS** store.
+
+5. **Database & Demo Support:**
+   - Include a working interactive simulation of the 8-digit SMS/Email verification code and unique username check inside the React preview so I can test the full sign-up flow on my phone right now, and include the `UNIQUE` username & phone constraints in our Milestone 3 Supabase SQL schema.
+
 
