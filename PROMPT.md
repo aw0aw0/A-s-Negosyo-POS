@@ -45,3 +45,9 @@ Build this project in **3 separate milestones** so the code never cuts off mid-g
 - Provide step-by-step **mobile-friendly Vercel deployment instructions** to connect my GitHub repo `aw0aw0/A-s-Negosyo-POS` and go live.
 
 **Begin Milestone 1 now and stop once Milestone 1 is complete.**
+Great job on Milestone 1! Before moving to Milestone 2, please add one small UX fix to the Auth screen:
+- Add a **Show/Hide Password eye icon toggle** inside all password input fields (Log In and Sign Up) so users with poor eyesight can easily view and verify their password.
+- Also add a **"Simulate Scan" demo dropdown/button** inside the Scan QR/Barcode modal so I can test scanning SKUs while inside the Claude preview (in addition to the live camera and USB scanner support).
+
+After applying those two small fixes, proceed directly to building **Milestone 2** (the 4-tier pricelist, feature paywalls, PalawanPay QR Ph & Maya `+639692692760` / `R A B` upgrade checkout, and the Super Admin `/admin` approval panel).
+
