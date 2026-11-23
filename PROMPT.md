@@ -119,6 +119,24 @@ Please update the verification code to **6 digits** and now proceed to build **M
      - **Primary Text:** `#0F172A` (Slate-900) and Secondary Text `#475569` (Slate-600)
      - **Semantic Status Colors:** Success/Paid `#15803D`, Warning `#B45309`, Danger/Void `#B91C1C`
    - Keep the seller's custom **Brand Accent Color** setting working so owners can still override the primary `#0F766E` accent with their own shop color if desired.
+Before I download the files and deploy **A's Negosyo POS** live, please apply a **complete Security Hardening & UI Polish pass** across all project files (`App.jsx`, `cloud.js`, `schema.sql`, `package.json`, `vite.config.js`, and add a `vercel.json` file):
+
+### PART 1: 14-Point Production Security Hardening
+1. **Security Headers (`vercel.json`):** Add a `vercel.json` file with strict HTTP security headers: `Content-Security-Policy` (allowing Supabase, Google/Apple OAuth, and camera/Bluetooth), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy` (restricting camera/Bluetooth strictly to self).
+2. **Proper Authentication & Password Hashing:** Ensure all auth flows rely strictly on Supabase Auth (which hashes passwords server-side with bcrypt) and clear sensitive session tokens cleanly on logout.
+3. **Hide API Keys & Check Env Variables:** Ensure zero hardcoded keys exist anywhere in the codebase, verify `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` exist at startup with a safe fallback error screen if missing, and make sure `service_role` keys are never referenced in frontend code.
+4. **Secure Database & Limit User Access (`schema.sql`):** Audit all RLS policies so every table restricts `SELECT/INSERT/UPDATE/DELETE` strictly to `auth.uid() = owner_id` (or authorized staff for that store), revoke unnecessary `anon` permissions, and lock down RPC functions with `SECURITY DEFINER` + explicit `auth.uid()` checks.
+5. **Protect Admin Routes & Turn Off Debug Mode:** Remove the `Owner / Cashier / Super Admin` demo role switcher from production builds (`import.meta.env.PROD`), disable all `console.log` debug outputs in production, and guard the `/admin` view so it only renders when `profile.role === 'super_admin'` verified from Supabase.
+6. **Protect Against XSS & Sanitize Forms:** Sanitize and trim all user inputs (store names, product names, customer "utang" notes, receipt footers, reference numbers) to strip HTML/script tags, and never use `dangerouslySetInnerHTML`.
+7. **Add Rate Limiting:** Add client-side cooldown timers/debouncing on OTP requests (60-second resend cooldown), login attempts, and payment proof submissions, plus note Supabase Auth rate-limit settings in the instructions.
+8. **Check File Uploads:** Strictly validate all uploaded files (Seller Payment QRs, Subscription Payment Screenshots, Admin PalawanPay QR) on both frontend and Supabase Storage bucket rules: allow **only `image/jpeg`, `image/png`, and `image/webp`**, enforce a **2MB max file size**, and randomize uploaded filenames using UUIDs.
+9. **Update Dependencies (`package.json`):** Use up-to-date, stable, vulnerability-free versions of React, Vite, Tailwind CSS, `@supabase/supabase-js`, `lucide-react`, and `html5-qrcode`.
+
+### PART 2: UI/UX Polish (Zero Emojis + Light Fintech Color Palette)
+- **Remove All Emojis:** Strip every single emoji from the entire UI and replace them with clean **`lucide-react` stroke icons**.
+- **Light Fintech Color Palette:** Update the default theme to a clean, high-contrast light palette: `#F8FAFC` background, `#FFFFFF` cards with `#E2E8F0` borders, `#0F766E` (Emerald Teal) primary buttons, `#D97706` (Warm Amber) Pro/upgrade highlights, and `#0F172A` / `#475569` slate typography (while keeping the seller's custom Brand Accent Color override working).
+
+Output the updated downloadable files (including the new `vercel.json`) so I am ready to upload them straight to GitHub and Vercel.
 
 
 
