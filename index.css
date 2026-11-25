@@ -1,0 +1,10 @@
+@import "tailwindcss";
+:root{--bg:#F8FAFC;--card:#FFFFFF;--bd:#E2E8F0;--tx:#0F172A;--mu:#475569;--pri:#0F766E;--amb:#D97706;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px}
+.inp{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:15px}
+.inp:focus{outline:2px solid var(--pri);outline-offset:1px}
+.mu{color:var(--mu)}
+.btn{border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px}
+.ghost{border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+@media print{body *{visibility:hidden}#rcpt,#rcpt *{visibility:visible}#rcpt{position:absolute;left:0;top:0;width:100%}}
