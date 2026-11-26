@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>A’s Negosyo POS</title>
+<meta name="description" content="Mobile point-of-sale and inventory management for Filipino sellers.">
+<title>A's Negosyo POS — Mobile POS &amp; Inventory for Pinoy Sellers</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
@@ -215,7 +216,7 @@ const f=(k,l)=><label className="block text-xs mu">{l}<input className="inp mt-1
 return <div className="p-3 space-y-3"><b>Store Customization</b><div className="card p-3 space-y-2"><label className="block text-xs mu"><span className="flex justify-between"><span>Store name</span><span>{set.name.length}/30</span></span><input className="inp mt-1" maxLength={30} value={set.name} onChange={e=>setSet({...set,name:e.target.value.slice(0,30)})}/></label>{f("addr","Branch address")}{f("phone","Contact number")}{f("tin","TIN / VAT note")}{f("foot","Receipt footer")}
 <label className="block text-xs mu">Brand accent color<input type="color" className="block mt-1" value={set.accent} onChange={e=>setSet({...set,accent:e.target.value})} style={{width:60,height:36}}/></label></div>
 <div className="card p-3 space-y-2"><b className="text-sm">Payment QR Code (QR Ph / GCash / Maya)</b>{set.qr&&<img src={set.qr} alt="Your payment QR" style={{maxHeight:200}} className="rounded-lg"/>}
-<input type="file" accept="image/*" onChange={up} className="text-sm"/><p className="mu text-xs">Saved to Supabase Storage bucket <code>seller-qr</code> in Milestone 3.</p></div></div>;}
+<input type="file" accept="image/*" onChange={up} className="text-sm"/><p className="mu text-xs">Uploaded QR image is shown to customers at checkout.</p></div></div>;}
 
 const PL={free:{n:"Free Starter",m:0,y:0,r:0,f:["30 products/SKUs","Unlimited POS checkout and QR scan","Basic payment QR display","1 Owner login (1 branch)","Basic daily sales total","Watermarked receipts"]},
 lite:{n:"Negosyo Lite",m:199,y:1990,r:1,f:["300 products/SKUs","Customer “Utang” ledger + 1-tap reminder copy","Expense and Petty Cash tracker","True Net Profit (COGS)","Unbranded receipts","Excel/CSV export"]},
@@ -267,7 +268,7 @@ const upl=e=>{const fl=e.target.files[0];if(!fl)return;const r=new FileReader();
 const act=(p,days,ok)=>{setPayments(payments.map(x=>x.id===p.id?{...x,status:ok?"approved":"rejected"}:x));if(ok&&p.plan)setStores(ss=>ss.map(s=>s.id===p.storeId?{...s,plan:p.plan,expires:new Date(Date.now()+days*864e5).toISOString()}:s))};
 const pend=payments.filter(p=>p.status==="pending"),rest=payments.filter(p=>p.status!=="pending");
 return <div className="p-3 space-y-3"><b>🛡️ Super Admin</b>
-<div className="card p-3 space-y-2"><b className="text-sm">PalawanPay QR Ph (shown at upgrade checkout)</b>{adminQr&&<img src={adminQr} alt="PalawanPay QR Ph" style={{maxHeight:180}} className="rounded-lg"/>}<input type="file" accept="image/*" onChange={upl} className="text-sm"/><p className="mu text-xs">Stored in Supabase bucket <code>admin-qr</code> in Milestone 3.</p></div>
+<div className="card p-3 space-y-2"><b className="text-sm">PalawanPay QR Ph (shown at upgrade checkout)</b>{adminQr&&<img src={adminQr} alt="PalawanPay QR Ph" style={{maxHeight:180}} className="rounded-lg"/>}<input type="file" accept="image/*" onChange={upl} className="text-sm"/><p className="mu text-xs">Uploaded QR image is shown to users at plan upgrade checkout.</p></div>
 <b className="text-sm">Pending payments ({pend.length})</b>{!pend.length&&<p className="mu text-sm">Nothing to review.</p>}
 {pend.map(p=><div key={p.id} className="card p-3 space-y-2 text-sm"><div><b>{p.store}</b><div>{p.item} · {peso(p.amt)}</div><div className="mu text-xs">Ref: {p.ref}</div></div>{p.shot&&<img src={p.shot} alt="Payment screenshot" style={{maxHeight:160}} className="rounded-lg"/>}
 {p.plan?<div className="flex gap-2"><button className="btn flex-1 text-white text-xs" style={{background:"#0f9d6b"}} onClick={()=>act(p,30,true)}>Approve and Activate (30 Days)</button><button className="btn flex-1 text-white text-xs" style={{background:"#0f9d6b"}} onClick={()=>act(p,365,true)}>(365 Days)</button></div>:<button className="btn w-full text-white" style={{background:"#0f9d6b"}} onClick={()=>act(p,30,true)}>Approve add-on</button>}

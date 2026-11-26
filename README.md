@@ -1,7 +1,7 @@
 # A-s-Negosyo-POS# A's Negosyo POS — Project Memory & Status
 
 - **App Name:** A's Negosyo POS (BigSeller-style POS & Omnichannel Inventory SaaS for Philippine Sellers)
-- **GitHub Repo:** https://github.com
+- **GitHub Repo:** https://github.com/aw0aw0/A-s-Negosyo-POS
 - **Tech Stack:** React + Vite + Tailwind CSS + Supabase (Auth, PostgreSQL, Storage) + Vercel
 - **SaaS Owner Payment Collection:** PalawanPay QR Ph & Maya (`+639692692760` / `R A B`) with Super Admin `/admin` manual approval (30/365 days)
 - **Subscription Tiers (Monthly / Annual 2-mos free):**
@@ -16,7 +16,7 @@
   - Password: max 8 chars, at least 1 uppercase letter, at least 1 special character; focus-only show/hide eye icon
   - Shop Name: max 30 letters
 - **Design:** Zero emojis (`lucide-react` icons only), Light Fintech Palette (`#0F766E` Emerald Teal, `#D97706` Amber, `#F8FAFC` background, `#FFFFFF` cards)
-- **Current Progress:**
-  - [x] Milestone 1 & 2 completed and exported in `A's Negosyo POS.html`
-  - [ ] Milestone 3 (Live Supabase SQL + Vite packaging + Thermal Bluetooth print + UI polish) & Vercel deployment
-"Continue my project A's Negosyo POS. Read my GitHub repo at https://github.com (check README.md, PROMPT.md, and A's Negosyo POS.html) so we can continue from where we stopped."
+- **Production Status:**
+  - [x] React + Vite application packaged for production
+  - [x] Supabase backend connected and deployed to Vercel
+  - [x] Google Sign-In configured for the live app

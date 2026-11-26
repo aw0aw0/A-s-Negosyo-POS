@@ -1,12 +1,12 @@
 
 Build a complete, mobile-first multi-tenant SaaS web application named **A's Negosyo POS**, modeled after **BigSeller** for Philippine retail and e-commerce sellers, built with **React, Tailwind CSS, and Supabase** (Auth, PostgreSQL Database, and Storage).
 
-**CRITICAL EXECUTION RULE (3-MILESTONE BUILD):**
-Build this project in **3 separate milestones** so the code never cuts off mid-generation. Complete **Milestone 1** first, render the working interactive React Artifact, and **stop and wait for me to say 'Next'** before building Milestone 2.
+**CRITICAL EXECUTION RULE (3-PHASE BUILD):**
+Build this project in **3 separate phases** so the code never cuts off mid-generation. Complete **Phase 1** first, render the working interactive React Artifact, and **stop and wait for me to say 'Next'** before building Phase 2.
 
 ---
 
-### MILESTONE 1: Core BigSeller POS, QR Scan/Pay & Store Customization (Build This Now)
+### PHASE 1: Core BigSeller POS, QR Scan/Pay & Store Customization (Build This Now)
 1. **Branding & Auth UI:** Brand the entire app as **A's Negosyo POS**. Include a Sign Up / Log In screen (structured for Supabase Auth) plus a top **Demo Role Switcher (`Owner` / `Cashier` / `Super Admin`)** so I can test all permissions immediately on my phone.
 2. **Role Permissions:** When switched to **Cashier**, automatically hide Net Profit, Cost Prices (COGS), Expense totals, and Store Settings, and disable deleting sales or manually editing stock counts.
 3. **BigSeller-Style Mobile Navigation & Modules:**
@@ -18,7 +18,7 @@ Build this project in **3 separate milestones** so the code never cuts off mid-g
 
 ---
 
-### MILESTONE 2: SaaS Subscription Tiers, PalawanPay QR Ph & Maya Billing + Super Admin (Wait for 'Next')
+### PHASE 2: SaaS Subscription Tiers, PalawanPay QR Ph & Maya Billing + Super Admin (Wait for 'Next')
 1. **4-Tier Pricelist & Feature Paywalls (Monthly / Annual Toggle — Annual gives 2 months free):**
    Show a clean **'Upgrade to A's Negosyo POS'** modal whenever a user clicks a locked feature or hits their plan limit:
    - **Free Starter (₱0/mo):** Max **30 Products/SKUs**, unlimited POS checkout & QR scan, basic payment QR display, 1 Owner login (1 branch), basic daily sales total, watermarked receipts (`Powered by A's Negosyo POS`).
@@ -40,16 +40,16 @@ Build this project in **3 separate milestones** so the code never cuts off mid-g
 
 ---
 
-### MILESTONE 3: Live Supabase Backend & Vercel Deployment (Wait for 'Next')
+### PHASE 3: Live Supabase Backend & Vercel Deployment (Wait for 'Next')
 - Provide the complete **Supabase PostgreSQL SQL Schema** (all tables, Row-Level Security policies isolated per `owner_id`, Storage bucket setup for seller QRs, payment screenshots, and admin PalawanPay QR, plus auto-expiry SQL/client check).
 - Provide step-by-step **mobile-friendly Vercel deployment instructions** to connect my GitHub repo `aw0aw0/A-s-Negosyo-POS` and go live.
 
-**Begin Milestone 1 now and stop once Milestone 1 is complete.**
-Great job on Milestone 1! Before moving to Milestone 2, please add one small UX fix to the Auth screen:
+**Begin Phase 1 now and stop once Phase 1 is complete.**
+Great job on Phase 1! Before moving to Phase 2, please add one small UX fix to the Auth screen:
 - Add a **Show/Hide Password eye icon toggle** inside all password input fields (Log In and Sign Up) so users with poor eyesight can easily view and verify their password.
 - Also add a **"Simulate Scan" demo dropdown/button** inside the Scan QR/Barcode modal so I can test scanning SKUs while inside the Claude preview (in addition to the live camera and USB scanner support).
 
-After applying those two small fixes, proceed directly to building **Milestone 2** (the 4-tier pricelist, feature paywalls, PalawanPay QR Ph & Maya `+639692692760` / `R A B` upgrade checkout, and the Super Admin `/admin` approval panel).
+After applying those two small fixes, proceed directly to building **Phase 2** (the 4-tier pricelist, feature paywalls, PalawanPay QR Ph & Maya `+639692692760` / `R A B` upgrade checkout, and the Super Admin `/admin` approval panel).
 Please update the Authentication, Sign-Up, and Store Setup flow in **A's Negosyo POS** with the following exact rules and validations:
 
 1. **Password Eye Icon Behavior:**
@@ -85,10 +85,10 @@ Please update the Authentication, Sign-Up, and Store Setup flow in **A's Negosyo
        - Both `Password` and `Confirm Password` must match before activating their **A's Negosyo POS** store.
 
 5. **Database & Demo Support:**
-   - Include a working interactive simulation of the 8-digit SMS/Email verification code and unique username check inside the React preview so I can test the full sign-up flow on my phone right now, and include the `UNIQUE` username & phone constraints in our Milestone 3 Supabase SQL schema.
+   - Include a working interactive simulation of the 8-digit SMS/Email verification code and unique username check inside the React preview so I can test the full sign-up flow on my phone right now, and include the `UNIQUE` username & phone constraints in our Phase 3 Supabase SQL schema.
    - Good call—let's switch the SMS and Email verification code to **6 digits** so it matches Supabase Auth's default OTP out of the box!
 
-Please update the verification code to **6 digits** and now proceed to build **Milestone 3** to make **A's Negosyo POS** completely live-ready:
+Please update the verification code to **6 digits** and now proceed to build **Phase 3** to make **A's Negosyo POS** completely live-ready:
 
 1. **Thermal Receipt Printer Support (58mm & 80mm):**
    - Add dedicated **`@media print` thermal receipt CSS** formatted cleanly for both **58mm** and **80mm** thermal paper rolls (with a paper-width toggle in Store Settings).
