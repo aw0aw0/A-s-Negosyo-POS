@@ -135,32 +135,15 @@ export const cloud = {
     category: clean(p.category, 30) || null, unit: clean(p.unit, 12) || "pc", description: clean(p.description, 120) || null,
     image_url: safeImg(p.image_url) || null,
   }, { onConflict: "store_id,sku" })),
+  deleteProduct: async id => {
+    const r = await sb.from("products").delete().eq("id", id).eq("store_id", storeId);
+    if (r.error) {
+      if (r.error.code === "23503") throw new Error("Cannot delete a product that already has past sales orders. Set its stock to 0 instead.");
+      throw r.error;
+    }
+  },
   placeOrder: async ({ items, discount, method, ref, change, sales_channel, waybill_number, platform_fee }) => {
     const o = ok(await sb.rpc("place_order", { p_items: items.map(i => ({ product_id: i.id, qty: Math.floor(+i.qty) })), p_discount: Math.max(0, +discount || 0), p_method: method, p_ref: refOf(ref), p_change: Math.max(0, +change || 0) }));
     // Channel details are saved right after the order is created, so the place_order function does not have to change.
     const channel = CHANNELS.includes(sales_channel) ? sales_channel : "Walk-in";
     const mk = MARKETPLACES.includes(channel);
-    const extra = { sales_channel: channel, waybill_number: mk ? refOf(waybill_number) || null : null, platform_fee: mk ? Math.min(Math.max(0, +platform_fee || 0), 9999999) : 0 };
-    if (extra.sales_channel !== "Walk-in" || extra.waybill_number || extra.platform_fee) {
-      const r = await sb.from("orders").update(extra).eq("order_no", o.order_no).select("order_no");
-      if (r.error || !r.data?.length) console.warn("Order saved, but its sales channel details were not:", r.error?.message || "no row updated (check the orders UPDATE policy).");
-      else Object.assign(o, extra);
-    }
-    return mapO(o);
-  },
-  setStatus: async (no, status) => ok(await sb.from("orders").update({ status }).eq("order_no", no)),
-  addExpense: async amt => ok(await sb.from("expenses").insert({ amount: Math.max(0.01, +amt || 0) })),
-  submitPayment: async ({ o, ref, shot }) => {
-    const r = refOf(ref);
-    if (!/^[A-Za-z0-9-]{4,40}$/.test(r)) throw new Error("Enter a valid reference number.");
-    const { path } = await upload("payment-screenshots", me, shot);
-    ok(await sb.from("subscription_payments").insert({ item: o.label, plan: o.plan, addon: o.plan ? null : o.key, days: o.days, amount: o.amt, reference_no: r, screenshot_path: path }));
-  },
-  approve: async (id, days) => ok(await sb.rpc("approve_payment", { p_id: id, p_days: days === 365 ? 365 : 30 })),
-  reject: async id => ok(await sb.rpc("reject_payment", { p_id: id })),
-  setAdminQr: async d => {
-    const { url: u } = await upload("admin-qr", "platform", d);
-    ok(await sb.from("platform_settings").upsert({ key: "palawanpay_qr_url", value: u, updated_by: me, updated_at: new Date().toISOString() }));
-    return u;
-  },
-};
