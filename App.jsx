@@ -4,6 +4,7 @@ import {Html5Qrcode} from "html5-qrcode";
 import {LayoutDashboard,Receipt as ReceiptIcon,Package,Tag,Settings as SettingsIcon,Gem,ShieldCheck,Store,ScanLine,Smartphone,Mail,Apple,Lock,Printer,Check,X,ArrowLeft,AlertTriangle,MessageSquare,CheckCircle2,Star,Eye,EyeOff,Copy} from "lucide-react";
 import {sb,live,cloud,envProblem,strip,clean,checkImage} from "./cloud.js";
 const peso=n=>"₱"+Number(n||0).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const ENABLE_OPTIONAL_AUTH_PROVIDERS=import.meta.env.VITE_ENABLE_OPTIONAL_AUTH_PROVIDERS==="true";
 const seed=[
 {id:1,sku:"SKU-001",name:"Kape 3-in-1 (box)",price:120,cost:85,stock:40,shopee:"SP-KAPE",lazada:"",tiktok:""},
 {id:2,sku:"SKU-002",name:"Dried Mangoes 200g",price:150,cost:95,stock:25,shopee:"SP-MANGO",lazada:"LZ-MANGO",tiktok:""},
@@ -66,8 +67,8 @@ return <div className="p-5 max-w-sm mx-auto pt-8">
 {!live&&<button className="text-sm mu w-full" onClick={()=>onIn(null)}>Skip to demo store as {role}</button>}</>}
 {st==="signup"&&<><b>Create your account</b><Err/>
 <button className="btn ghost w-full" onClick={()=>{if(live)return cloud.oauth("google");setErr("");setEm("");setSt("google")}}><b style={{color:"#4285F4"}}>G</b> Continue with Google</button>
-<button className="btn ghost w-full" onClick={()=>{if(live)return cloud.oauth("apple");setErr("");setEm("");setSt("apple")}}><Apple size={18} className="inline -mt-0.5 mr-1.5"/>Continue with Apple ID</button>
-<button className="btn ghost w-full" onClick={()=>{setErr("");setSt("phone")}}><Smartphone size={18} className="inline -mt-0.5 mr-1.5"/>Sign Up with Phone Number (+63)</button>
+{ENABLE_OPTIONAL_AUTH_PROVIDERS&&<><button className="btn ghost w-full" onClick={()=>{if(live)return cloud.oauth("apple");setErr("");setEm("");setSt("apple")}}><Apple size={18} className="inline -mt-0.5 mr-1.5"/>Continue with Apple ID</button>
+<button className="btn ghost w-full" onClick={()=>{setErr("");setSt("phone")}}><Smartphone size={18} className="inline -mt-0.5 mr-1.5"/>Sign Up with Phone Number (+63)</button></>}
 <button className="btn ghost w-full" onClick={()=>{setErr("");setEm("");setSt("email")}}><Mail size={18} className="inline -mt-0.5 mr-1.5"/>Use Other Email</button>
 <button className="text-sm mu w-full" onClick={()=>{setErr("");setSt("login")}}>Already have an account? Log In</button></>}
 {(st==="google"||st==="apple")&&<><Back/><b>{st==="google"?"Google account":"Apple ID"}</b><p className="mu text-xs">Demo of <code>supabase.auth.signInWithOAuth({`{provider:"${st}"}`})</code>. Enter the account email to simulate the sign-in.</p>
