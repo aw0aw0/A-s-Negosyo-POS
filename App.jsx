@@ -135,19 +135,19 @@ return <Modal title="Receipt" onClose={onClose}>
 <button className="btn w-full ghost mt-2" onClick={async()=>{if(rank<1)return up("Direct Bluetooth Printing");try{await btPrint(o,set)}catch(e){alert(e.message)}}}>{rank<1?<Lock size={15} className="inline -mt-0.5 mr-1.5" style={{color:"#D97706"}}/>:<Printer size={15} className="inline -mt-0.5 mr-1.5"/>}Print via Bluetooth (1-tap)</button>
 <p className="mu text-xs mt-1">System print works on every plan ({pw}mm paper). Direct Bluetooth printing is Negosyo Lite and up.</p></Modal>;}
 
-function Checkout({total,set,onDone,onClose}){const[m,setM]=useState("Cash");const[cash,setCash]=useState("");const[ref,setRef]=useState("");
+function Checkout({total,set,storeQr,onOpenSettings,onDone,onClose}){const[m,setM]=useState("Cash");const[cash,setCash]=useState("");const[ref,setRef]=useState("");
 const change=Math.max(0,(+cash||0)-total);const ok=m==="Cash"?(+cash||0)>=total:ref.trim().length>3;
 return <Modal title={"Pay "+peso(total)} onClose={onClose}>
 <div className="flex gap-2 mb-3">{["Cash","QR Ph / GCash / Maya"].map(k=><button key={k} onClick={()=>setM(k)} className={"btn flex-1 text-xs "+(m===k?"text-white":"ghost")} style={m===k?{background:set.accent}:{}}>{k}</button>)}</div>
 {m==="Cash"?<div className="space-y-2"><input className="inp" inputMode="decimal" placeholder="Cash received" value={cash} onChange={e=>setCash(e.target.value)}/>
 <div className="flex gap-2 flex-wrap">{[total,100,500,1000].map((v,i)=><button key={i} className="btn ghost" onClick={()=>setCash(String(v))}>{i?peso(v):"Exact"}</button>)}</div>
 <div className="card p-3 text-center"><div className="mu text-xs">CHANGE</div><div className="text-3xl font-bold">{peso(change)}</div></div></div>
-:<div className="space-y-2 text-center">{set.qr?<img src={set.qr} alt="Seller payment QR" className="mx-auto rounded-lg" style={{maxHeight:260}}/>:<div className="card p-6 mu text-sm">No payment QR yet. Upload yours in Settings.</div>}
+:<div className="space-y-2 text-center">{storeQr?<img src={storeQr} alt="Seller payment QR" className="mx-auto rounded-lg" style={{maxHeight:260}}/>:<div className="card p-6 mu text-sm space-y-3"><p>No store QR uploaded yet. Go to Settings to upload your GCash / Maya / QR Ph code.</p>{onOpenSettings&&<button className="btn ghost" onClick={onOpenSettings}>Open Settings</button>}</div>}
 <p className="mu text-xs">Customer scans, pays {peso(total)}, then enter their reference no.</p>
-<input className="inp" placeholder="Customer reference number" maxLength={40} value={ref} onChange={e=>setRef(e.target.value.replace(/[^A-Za-z0-9-]/g,"").slice(0,40))}/></div>}
+<input className="inp" placeholder="Customer reference number" maxLength={40} value={ref} onChange={e=>setRef(e.target.value.replace(/[^A-Za-z0-9-]/g,"").slice(0,40))}/><p className="mu text-xs text-left">Verify the incoming transfer &amp; reference number on your e-wallet/bank app before confirming.</p></div>}
 <button disabled={!ok} className="btn w-full text-white mt-4 disabled:opacity-40" style={{background:set.accent}} onClick={()=>onDone({method:m,ref:m==="Cash"?"":ref,change})}>Confirm Payment</button></Modal>;}
 
-function POS({products,setProducts,orders,setOrders,set,role,rank,up}){
+function POS({products,setProducts,orders,setOrders,set,role,rank,up,onOpenSettings}){
 const[q,setQ]=useState("");const[cart,setCart]=useState([]);const[disc,setDisc]=useState("");const[scan,setScan]=useState(false);const[pay,setPay]=useState(false);const[rc,setRc]=useState(null);const[toast,setToast]=useState("");
 const add=p=>{if(p.stock<=(cart.find(c=>c.id===p.id)?.qty||0)){setToast("Out of stock: "+p.name);return}
 setCart(c=>c.find(x=>x.id===p.id)?c.map(x=>x.id===p.id?{...x,qty:x.qty+1}:x):[...c,{...p,qty:1}])};
@@ -173,7 +173,7 @@ return <div className="p-3 space-y-3">
 <button className="btn w-full text-white" style={{background:set.accent}} onClick={()=>setPay(true)}>Checkout</button></>}</div>
 {toast&&<div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-50 px-4 py-2 rounded-full text-white text-sm" style={{background:"#14161a"}}>{toast}</div>}
 {scan&&<Scanner products={products} onCode={bySku} onClose={()=>setScan(false)}/>}
-{pay&&<Checkout total={total} set={set} onDone={done} onClose={()=>setPay(false)}/>}
+{pay&&<Checkout total={total} set={set} storeQr={set.qr} onOpenSettings={onOpenSettings} onDone={done} onClose={()=>setPay(false)}/>}
 {rc&&<Receipt o={rc} set={set} onClose={()=>setRc(null)} rank={rank} up={up}/>}</div>;}
 
 function Dashboard({orders,products,expenses,setExpenses,role,set,rank,up}){const[ex,setEx]=useState("");const own=role!=="Cashier";
@@ -305,7 +305,7 @@ return <div className="max-w-xl mx-auto min-h-screen pb-20">
 {!authed?<Auth pre={pre} role={role} users={users} setUsers={setUsers} onIn={u=>{if(live){refresh();return}if(u&&u.shop)setSet(x=>({...x,name:u.shop}));setAuthed(true)}}/>:<>
 <div className="px-3 pt-2 text-xs mu">Plan: <b>{PL[plan].n}</b>{exp?" · expires "+fmtD(exp):""}{plan==="free"&&!cash&&<button className="ml-2 font-bold" style={{color:"#D97706"}} onClick={()=>up("")}>Upgrade</button>}</div>
 {tab==="Dashboard"&&<Dashboard {...{orders,products,expenses,setExpenses,role,set,rank,up}}/>}
-{tab==="POS"&&<POS {...{products,setProducts,orders,setOrders,set,role,rank,up}}/>}
+{tab==="POS"&&<POS {...{products,setProducts,orders,setOrders,set,role,rank,up,onOpenSettings:cash?undefined:()=>setTab("Settings")}}/>}
 {tab==="Orders"&&<Orders {...{orders,setOrders,set,rank,up}}/>}
 {tab==="Inventory"&&<Inventory {...{products,setProducts,role,set,rank,up}}/>}
 {tab==="Settings"&&!cash&&<Settings {...{set,setSet}}/>}
