@@ -1,7 +1,7 @@
 
 import {useState,useMemo,useEffect,useRef} from "react";
 import {Html5Qrcode} from "html5-qrcode";
-import {LayoutDashboard,Receipt as ReceiptIcon,Package,Tag,Settings as SettingsIcon,Gem,ShieldCheck,Store,ScanLine,Smartphone,Mail,Lock,Printer,Check,X,ArrowLeft,AlertTriangle,MessageSquare,CheckCircle2,Star,Eye,EyeOff,Copy,Trash2,ImagePlus} from "lucide-react";
+import {LayoutDashboard,Receipt as ReceiptIcon,Package,Tag,Settings as SettingsIcon,Gem,ShieldCheck,ScanLine,Smartphone,Mail,Lock,Printer,Check,X,ArrowLeft,AlertTriangle,MessageSquare,CheckCircle2,Star,Eye,EyeOff,Copy,Trash2,ImagePlus} from "lucide-react";
 import {sb,live,cloud,envProblem,strip,clean,checkImage} from "./cloud.js";
 const peso=n=>"₱"+Number(n||0).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2});
 const seed=[
@@ -59,7 +59,7 @@ const Err=()=>err?<div className="text-sm text-red-500">{err}</div>:null;
 const Back=()=><button className="text-sm mu" onClick={()=>reset("")}><ArrowLeft size={14} className="inline -mt-0.5 mr-1.5"/>Back to sign-up options</button>;
 return <div className="p-5 max-w-sm mx-auto pt-8">
 {st==="code"&&ch==="phone"&&bn&&!live&&<div className="fixed top-2 left-2 right-2 z-[60] max-w-sm mx-auto rounded-2xl p-3 text-sm shadow-lg" style={{background:"#14161a",color:"#fff"}}><div className="flex justify-between text-xs" style={{opacity:.7}}><span className="flex items-center gap-1"><MessageSquare size={12}/> Messages · now</span><button onClick={()=>setBn(false)} aria-label="Dismiss"><X size={14}/></button></div><div className="mt-1">{msg8(code)}</div></div>}
-<div className="text-center mb-5"><div className="flex justify-center"><Store size={48} color="#0F766E"/></div><h1 className="text-2xl font-bold mt-2">A’s Negosyo POS</h1><p className="mu text-sm">POS at inventory para sa Pinoy sellers</p></div>
+<div className="text-center mb-5"><img src="/logo-full.png" alt="A’s Negosyo PH" className="w-32 h-32 mx-auto rounded-2xl object-contain" /><h1 className="text-2xl font-bold mt-2">A’s Negosyo POS</h1><p className="mu text-sm">POS at inventory para sa Pinoy sellers</p></div>
 <div className="card p-4 space-y-3">
 {st==="login"&&<><b>Log In</b><input className="inp" placeholder={live?"Email or phone":"Username, email or phone"} value={lid} onChange={e=>setLid(e.target.value)}/><PwField label="Password" value={lpw} onChange={setLpw} ac="current-password"/><button type="button" className="text-sm w-full text-right font-semibold" style={{color:"#0F766E"}} onClick={()=>{setErr("");setInfo("");setEm("");setSt("forgot")}}>Forgot Password?</button>{notice&&<div className="text-sm" style={{color:"#0F766E"}}>{notice}</div>}<Err/>
 <Btn onClick={login}>Log In</Btn><Btn ghost onClick={()=>reset("")}>Create an account</Btn>
@@ -298,7 +298,7 @@ return <div className="p-3 space-y-3"><b className="flex items-center gap-1"><Sh
 function ResetPassword({onDone}){const[a,setA]=useState("");const[b,setB]=useState("");const[err,setErr]=useState("");const[busy,setBusy]=useState(false);
 const e1=!a?"":!/[A-Z]/.test(a)?"Add at least 1 UPPERCASE letter.":!/[^A-Za-z0-9\s]/.test(a)?"Add at least 1 special character (!@#$%^&*).":"";const ok=a&&!e1&&a===b;
 const save=async()=>{setBusy(true);setErr("");try{await cloud.updatePassword(a);await onDone()}catch(e){setErr(friendly(e));setBusy(false)}};
-return <div className="p-5 max-w-sm mx-auto pt-8"><div className="text-center mb-5"><div className="flex justify-center"><Store size={48} color="#0F766E"/></div><h1 className="text-2xl font-bold mt-2">A’s Negosyo POS</h1></div>
+return <div className="p-5 max-w-sm mx-auto pt-8"><div className="text-center mb-5"><img src="/logo-full.png" alt="A’s Negosyo PH" className="w-32 h-32 mx-auto rounded-2xl object-contain" /><h1 className="text-2xl font-bold mt-2">A’s Negosyo POS</h1></div>
 <div className="card p-4 space-y-3"><b>Reset Password</b>
 <PwField label="New Password" value={a} onChange={setA} maxLength={8} ac="new-password"/>{e1&&<div className="text-xs text-red-500">{e1}</div>}
 <PwField label="Confirm New Password" value={b} onChange={setB} maxLength={8} ac="new-password"/>{b&&a!==b&&<div className="text-xs text-red-500">Passwords do not match.</div>}
@@ -322,7 +322,7 @@ useEffect(()=>{if(!live||!authed||role==="Cashier")return;const t=setTimeout(()=
 if(recovery&&live)return <ResetPassword onDone={async()=>{await cloud.logout();wipe();setRecovery(false);setNotice("Password updated. Please log in with your new password.");window.history.replaceState(null,"",window.location.pathname)}}/>;
 return <div className="max-w-xl mx-auto min-h-screen pb-20">
 <div className="sticky top-0 z-40 px-3 py-2 flex items-center gap-2" style={{background:"var(--card)",borderBottom:"1px solid var(--bd)"}}>
-<b className="flex-1 text-sm" style={{color:set.accent}}><Store size={16} className="inline -mt-0.5 mr-1.5"/>A’s Negosyo POS</b>
+<b className="flex-1 text-sm" style={{color:set.accent}}><img src="/logo.png" alt="A’s Negosyo PH" className="w-6 h-6 rounded-full object-cover inline -mt-0.5 mr-1.5" />A’s Negosyo POS</b>
 {live||import.meta.env.PROD?<span className="text-xs mu">{role}</span>:<select className="inp" style={{width:130,padding:"6px 8px"}} value={role} onChange={e=>setRole(e.target.value)} aria-label="Demo role"><option>Owner</option><option>Cashier</option><option>Super Admin</option></select>}
 {authed&&<button className="btn ghost py-1" onClick={async()=>{if(live)await cloud.logout();wipe()}}>Out</button>}</div>
 {!authed?<Auth pre={pre} notice={notice} role={role} users={users} setUsers={setUsers} onIn={u=>{if(live){refresh();return}if(u&&u.shop)setSet(x=>({...x,name:u.shop}));setAuthed(true)}}/>:<>
