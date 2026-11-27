@@ -1,21 +1,108 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>A’s Negosyo POS</title>
-    <meta name="description" content="POS, inventory and orders for Philippine sellers." />
-    <meta name="theme-color" content="#0F766E" />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Negosyo POS" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/main.jsx"></script>
-  </body>
+<!doctype html>
+<html lang="en" data-theme="light" data-palette="charcoal">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#18181B" />
+<meta name="color-scheme" content="light dark" />
+<meta name="description" content="POS and inventory for Pinoy sellers." />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/logo.png" />
+<link rel="apple-touch-icon" href="/logo.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>A’s Negosyo POS</title>
+
+<!-- Apply saved theme before first paint (no flash). Keys match src/App.jsx -->
+<script>
+(function(){try{
+var d=document.documentElement,t=localStorage.getItem("asn-theme"),p=localStorage.getItem("asn-palette");
+if(t!=="dark"&&t!=="light")t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+if(["charcoal","navy","copper"].indexOf(p)<0)p="charcoal";
+d.setAttribute("data-theme",t);d.setAttribute("data-palette",p);
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",t==="dark"?"#121212":"#18181B");
+}catch(e){}})();
+</script>
+
+<style>
+/* ============ Surface + semantic tokens: LIGHT (default) ============ */
+:root{
+  --bg:#F4F4F5; --card:#FFFFFF; --card2:#F4F4F5; --inp:#FFFFFF; --bd:#E4E4E7;
+  --tx:#18181B; --mu:#52525B;
+  --ok:#047857; --warn:#B45309; --red:#DC2626; --red-bd:#FCA5A5;
+  --dng-bg:#D32F2F; --dng-t:#FFFFFF;
+  /* palette 1 (Charcoal & Champagne Gold), light */
+  --pri:#18181B; --pri-t:#FFFFFF; --acc:#B45309; --acc-t:#FFFFFF; --soft:#FEF3C7; --soft-t:#78350F;
+  color-scheme:light;
+}
+/* ============ DARK: elevated surfaces, no pure black, off-white text, desaturated semantics ============ */
+html[data-theme="dark"]{
+  --bg:#121212; --card:#1E1E1E; --card2:#2A2A2A; --inp:#2A2A2A; --bd:#2F2F2F;
+  --tx:#F4F4F5; --mu:#A1A1AA;
+  --ok:#34D399; --warn:#FBBF24; --red:#F87171; --red-bd:#7F1D1D;
+  --dng-bg:#F87171; --dng-t:#09090B;
+  color-scheme:dark;
+}
+/* ============ Palettes ============ */
+html[data-palette="charcoal"]{--pri:#18181B;--pri-t:#FFFFFF;--acc:#B45309;--acc-t:#FFFFFF;--soft:#FEF3C7;--soft-t:#78350F}
+html[data-palette="charcoal"][data-theme="dark"]{--pri:#F4F4F5;--pri-t:#09090B;--acc:#F59E0B;--acc-t:#09090B;--soft:#451A03;--soft-t:#F59E0B}
+html[data-palette="navy"]{--pri:#0F172A;--pri-t:#FFFFFF;--acc:#D97706;--acc-t:#0F172A;--soft:#FEF3C7;--soft-t:#78350F}
+html[data-palette="navy"][data-theme="dark"]{--pri:#38BDF8;--pri-t:#0F172A;--acc:#FBBF24;--acc-t:#0F172A;--soft:#1E293B;--soft-t:#FBBF24}
+html[data-palette="copper"]{--pri:#1E293B;--pri-t:#FFFFFF;--acc:#C2410C;--acc-t:#FFFFFF;--soft:#FFEDD5;--soft-t:#7C2D12}
+html[data-palette="copper"][data-theme="dark"]{--pri:#FB923C;--pri-t:#09090B;--acc:#FDBA74;--acc-t:#09090B;--soft:#431407;--soft-t:#FDBA74}
+
+/* ============ Base ============ */
+html,body{margin:0;background:var(--bg);color:var(--tx)}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+::selection{background:var(--soft);color:var(--soft-t)}
+
+/* Shared component classes (:where keeps specificity at 0 so Tailwind utilities can still override) */
+:where(.card){background:var(--card);border:1px solid var(--bd);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+html[data-theme="dark"] :where(.card){box-shadow:none}
+.card .card{background:var(--card2)}
+:where(.btn){display:inline-block;text-align:center;padding:10px 14px;border-radius:12px;font-weight:600;font-size:14px;line-height:1.25;cursor:pointer;border:1px solid transparent;transition:opacity .15s,background .15s,transform .05s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--tx);border-color:var(--bd)}
+.btn.ghost:hover:not(:disabled){background:var(--inp)}
+.btn.pri{background:var(--pri);color:var(--pri-t)}
+.btn.acc{background:var(--acc);color:var(--acc-t)}
+.btn.dng{background:var(--dng-bg);color:var(--dng-t)}
+.btn.pri:hover:not(:disabled),.btn.acc:hover:not(:disabled),.btn.dng:hover:not(:disabled){opacity:.9}
+.btn.danger{color:var(--red);border-color:var(--red-bd)}
+:where(.inp){width:100%;box-sizing:border-box;background:var(--inp);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;font-size:16px}
+.inp::placeholder{color:var(--mu);opacity:.85}
+.inp:focus{border-color:var(--acc);outline:none;box-shadow:0 0 0 2px var(--soft)}
+.inp:disabled{opacity:.6}
+.mu{color:var(--mu)}
+.t-red{color:var(--red)}
+.badge{display:inline-block;background:var(--soft);color:var(--soft-t);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+
+/* Theme toggle button (header + login screen) */
+.icobtn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--tx);flex-shrink:0;cursor:pointer}
+.icobtn:hover{background:var(--inp)}
+.auth-toggle{top:calc(env(safe-area-inset-top,0px) + 12px);width:40px;height:40px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+
+/* Settings -> Appearance */
+.switch{position:relative;width:50px;height:30px;border-radius:999px;border:2px solid var(--mu);background:var(--inp);flex-shrink:0;cursor:pointer;transition:background .2s,border-color .2s}
+.switch>span{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--mu);transition:transform .2s,background .2s}
+.switch[aria-checked="true"]{background:var(--pri);border-color:var(--pri)}
+.switch[aria-checked="true"]>span{transform:translateX(20px);background:var(--pri-t)}
+.swatchcard{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--bd);background:var(--card2);color:var(--tx);cursor:pointer}
+.swatchcard[data-on="true"]{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+
+#reader{border-radius:12px;overflow:hidden;color:var(--tx)}
+
+/* Receipts print black-on-white whatever the theme */
+@media print{
+  html[data-theme]{--bg:#fff;--card:#fff;--card2:#fff;--tx:#000;--mu:#000;--bd:#ccc}
+  .card{border:0!important;box-shadow:none!important}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+</body>
 </html>
