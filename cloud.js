@@ -16,6 +16,18 @@ export const envProblem = !url || !key
       : "";
 export const sb = envProblem ? null : createClient(url, key);
 export const live = !!sb;
+export const currentStoreId = () => storeId;
+export const broadcastDisplay = async (id, payload) => {
+  if (!sb || !id) return;
+  const channel = sb.channel("pos-display:" + id);
+  try {
+    const subscribed = await Promise.race([
+      new Promise(resolve => channel.subscribe(status => resolve(status === "SUBSCRIBED"))),
+      new Promise(resolve => setTimeout(() => resolve(false), 4000)),
+    ]);
+    if (subscribed) await channel.send({ type: "broadcast", event: "cart", payload });
+  } finally { sb.removeChannel(channel); }
+};
 
 let me = null, ownerId = null, storeId = null;
 const ok = r => { if (r.error) throw r.error; return r.data; };
@@ -58,7 +70,7 @@ const safeImg = u => (typeof u === "string" && /^https:\/\/[a-z0-9-]+\.supabase\
 
 const imgsOf = r => { const a = Array.isArray(r.images) ? r.images : []; return (a.length ? a : r.image_url ? [r.image_url] : []).map(safeImg).filter(Boolean).slice(0, 3); };
 const mapP = r => ({ id: r.id, sku: r.sku, name: r.name, price: +r.price, cost: +r.cost, stock: r.stock, expiry_date: r.expiry_date || "", batch_number: r.batch_number || "", serial_numbers: Array.isArray(r.serial_numbers) ? r.serial_numbers : (r.serial_numbers ? String(r.serial_numbers).split(",").map(x => x.trim()).filter(Boolean) : []), shopee: r.shopee_sku || "", lazada: r.lazada_sku || "", tiktok: r.tiktok_sku || "", images: imgsOf(r) });
-const mapO = o => ({ id: o.order_no, items: (o.order_items || []).map(i => ({ id: i.product_id, name: i.name, price: +i.price, cost: +i.cost, qty: i.qty })), subtotal: +o.subtotal, discount: +o.discount, total: +o.total, cogs: +o.cogs, method: o.method, ref: o.reference_no || "", change: +o.cash_change, status: o.status, time: new Date(o.created_at).toLocaleString("en-PH"), cashier_name: o.cashier_name || "Unknown", customer_id: o.customer_id || "", promo_code: o.promo_code || "", points_earned: +o.points_earned || 0, points_redeemed: +o.points_redeemed || 0, mdr_fee: +o.mdr_fee || 0, offline_queued: !!o.offline_queued });
+const mapO = o => ({ id: o.order_no, items: (o.order_items || []).map(i => ({ id: i.product_id, name: i.name, price: +i.price, cost: +i.cost, qty: i.qty })), subtotal: +o.subtotal, discount: +o.discount, total: +o.total, cogs: +o.cogs, method: o.method, ref: o.reference_no || "", change: +o.cash_change, status: o.status, created_at: o.created_at, time: new Date(o.created_at).toLocaleString("en-PH"), cashier_name: o.cashier_name || "Unknown", customer_id: o.customer_id || "", promo_code: o.promo_code || "", points_earned: +o.points_earned || 0, points_redeemed: +o.points_redeemed || 0, mdr_fee: +o.mdr_fee || 0, offline_queued: !!o.offline_queued });
 const eff = s => (s.plan_expires_at && new Date(s.plan_expires_at) < new Date() ? "free" : s.plan);
 const mapS = s => ({ id: s.owner_id === ownerId ? "me" : s.id, name: s.name, plan: eff(s), expires: eff(s) === "free" ? null : s.plan_expires_at });
 const signed = async p => (p ? safeImg((await sb.storage.from("payment-screenshots").createSignedUrl(p, 600)).data?.signedUrl) : "");
@@ -83,6 +95,16 @@ export const cloud = {
   },
   products: async () => ok(await sb.from("products").select("*").order("created_at")).map(mapP),
   orders: async () => ok(await sb.from("orders").select("*,order_items(*)").order("created_at", { ascending: false }).limit(300)).map(mapO),
+  displayStore: async id => {
+    const row = ok(await sb.from("stores").select("id,name,qr_url").eq("id", id).maybeSingle());
+    if (!row) return null;
+    const promos = (await sb.from("promotions").select("name,code,type,value").eq("store_id", id).eq("active", true).limit(20)).data || [];
+    return { id: row.id, name: row.name || "", logo: safeImg(row.logo_url) || "/logo-full.png", qr: safeImg(row.qr_url), promos };
+  },
+  kitchenOrders: async id => {
+    let q = sb.from("orders").select("order_no,status,method,total,created_at,cashier_name,customer_id,order_items(order_id,product_id,name,qty,price)").eq("store_id", id).gte("created_at", new Date(new Date().setHours(0,0,0,0)).toISOString()).order("created_at", { ascending: true }).limit(300);
+    return (await q).data?.map(mapO) || [];
+  },
   customers: async () => ok(await sb.from("customers").select("id,name,phone,points,store_id").order("name").limit(1000)).map(r => ({ id: r.id, name: r.name, phone: r.phone || "", email: "", points: +r.points || 0 })),
   promotions: async () => ok(await sb.from("promotions").select("id,code,name,type,value,active,store_id").eq("active", true).order("code").limit(200)).map(r => ({ id: r.id, code: r.code, name: r.name || r.code, type: r.type || "cart_pct", value: +r.value || 0, active: r.active !== false })),
   stores: async () => ok(await sb.from("stores").select("*").order("created_at")).map(mapS),
@@ -109,6 +131,7 @@ export const cloud = {
       profile, products, orders, stores, payments, customers, promotions,
       expenses: (ex.data || []).map(e => ({ amt: +e.amount })),
       adminQr: safeImg(ps.data?.value),
+      storeId: st.id,
       set: { name: st.name, addr: st.address || "", phone: st.phone || "", tin: st.tin_note || "", foot: st.receipt_footer || "", accent: st.accent, qr: safeImg(st.qr_url), paper: st.paper_width },
     };
   },
