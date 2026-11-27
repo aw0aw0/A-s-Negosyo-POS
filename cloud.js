@@ -57,8 +57,8 @@ const upload = async (bucket, folder, dataUrl) => {
 const safeImg = u => (typeof u === "string" && /^https:\/\/[a-z0-9-]+\.supabase\.co\//.test(u) ? u : "");
 
 const imgsOf = r => { const a = Array.isArray(r.images) ? r.images : []; return (a.length ? a : r.image_url ? [r.image_url] : []).map(safeImg).filter(Boolean).slice(0, 3); };
-const mapP = r => ({ id: r.id, sku: r.sku, name: r.name, price: +r.price, cost: +r.cost, stock: r.stock, shopee: r.shopee_sku || "", lazada: r.lazada_sku || "", tiktok: r.tiktok_sku || "", images: imgsOf(r) });
-const mapO = o => ({ id: o.order_no, items: (o.order_items || []).map(i => ({ id: i.product_id, name: i.name, price: +i.price, cost: +i.cost, qty: i.qty })), subtotal: +o.subtotal, discount: +o.discount, total: +o.total, cogs: +o.cogs, method: o.method, ref: o.reference_no || "", change: +o.cash_change, status: o.status, time: new Date(o.created_at).toLocaleString("en-PH") });
+const mapP = r => ({ id: r.id, sku: r.sku, name: r.name, price: +r.price, cost: +r.cost, stock: r.stock, expiry_date: r.expiry_date || "", batch_number: r.batch_number || "", serial_numbers: Array.isArray(r.serial_numbers) ? r.serial_numbers : (r.serial_numbers ? String(r.serial_numbers).split(",").map(x => x.trim()).filter(Boolean) : []), shopee: r.shopee_sku || "", lazada: r.lazada_sku || "", tiktok: r.tiktok_sku || "", images: imgsOf(r) });
+const mapO = o => ({ id: o.order_no, items: (o.order_items || []).map(i => ({ id: i.product_id, name: i.name, price: +i.price, cost: +i.cost, qty: i.qty })), subtotal: +o.subtotal, discount: +o.discount, total: +o.total, cogs: +o.cogs, method: o.method, ref: o.reference_no || "", change: +o.cash_change, status: o.status, time: new Date(o.created_at).toLocaleString("en-PH"), cashier_name: o.cashier_name || "Unknown", customer_id: o.customer_id || "", promo_code: o.promo_code || "", points_earned: +o.points_earned || 0, points_redeemed: +o.points_redeemed || 0, mdr_fee: +o.mdr_fee || 0, offline_queued: !!o.offline_queued });
 const eff = s => (s.plan_expires_at && new Date(s.plan_expires_at) < new Date() ? "free" : s.plan);
 const mapS = s => ({ id: s.owner_id === ownerId ? "me" : s.id, name: s.name, plan: eff(s), expires: eff(s) === "free" ? null : s.plan_expires_at });
 const signed = async p => (p ? safeImg((await sb.storage.from("payment-screenshots").createSignedUrl(p, 600)).data?.signedUrl) : "");
@@ -83,6 +83,8 @@ export const cloud = {
   },
   products: async () => ok(await sb.from("products").select("*").order("created_at")).map(mapP),
   orders: async () => ok(await sb.from("orders").select("*,order_items(*)").order("created_at", { ascending: false }).limit(300)).map(mapO),
+  customers: async () => ok(await sb.from("customers").select("id,name,phone,points,store_id").order("name").limit(1000)).map(r => ({ id: r.id, name: r.name, phone: r.phone || "", email: "", points: +r.points || 0 })),
+  promotions: async () => ok(await sb.from("promotions").select("id,code,name,type,value,active,store_id").eq("active", true).order("code").limit(200)).map(r => ({ id: r.id, code: r.code, name: r.name || r.code, type: r.type || "cart_pct", value: +r.value || 0, active: r.active !== false })),
   stores: async () => ok(await sb.from("stores").select("*").order("created_at")).map(mapS),
   payments: async () => {
     const rows = ok(await sb.from("subscription_payments").select("*,stores(name)").order("created_at", { ascending: false }).limit(100));
@@ -98,13 +100,13 @@ export const cloud = {
     const st = ok(await sb.from("stores").select("*").eq("owner_id", ownerId).maybeSingle());
     storeId = st?.id;
     if (!st) return { profile: null };
-    const [products, orders, stores, payments, ex, ps] = await Promise.all([
-      cloud.products(), cloud.orders(), cloud.stores(), cloud.payments(),
+    const [products, orders, stores, payments, customers, promotions, ex, ps] = await Promise.all([
+      cloud.products(), cloud.orders(), cloud.stores(), cloud.payments(), cloud.customers(), cloud.promotions(),
       sb.from("expenses").select("amount").order("created_at"),
       sb.from("platform_settings").select("*").eq("key", "palawanpay_qr_url").maybeSingle(),
     ]);
     return {
-      profile, products, orders, stores, payments,
+      profile, products, orders, stores, payments, customers, promotions,
       expenses: (ex.data || []).map(e => ({ amt: +e.amount })),
       adminQr: safeImg(ps.data?.value),
       set: { name: st.name, addr: st.address || "", phone: st.phone || "", tin: st.tin_note || "", foot: st.receipt_footer || "", accent: st.accent, qr: safeImg(st.qr_url), paper: st.paper_width },
@@ -119,9 +121,21 @@ export const cloud = {
     store_id: storeId, owner_id: ownerId, sku: clean(p.sku, 40), name: clean(p.name, 80),
     price: Math.max(0, +p.price || 0), cost: Math.max(0, +p.cost || 0), stock: Math.max(0, Math.floor(+p.stock || 0)),
     shopee_sku: clean(p.shopee, 40) || null, lazada_sku: clean(p.lazada, 40) || null, tiktok_sku: clean(p.tiktok, 40) || null,
+    expiry_date: p.expiry_date || null, batch_number: clean(p.batch_number, 80) || null, serial_numbers: (p.serial_numbers || []).map(x => clean(x, 80)).filter(Boolean),
     images: (p.images || []).map(safeImg).filter(Boolean).slice(0, 3), image_url: (p.images || []).map(safeImg).filter(Boolean)[0] || null,
   }, { onConflict: "store_id,sku" })),
   placeOrder: async ({ items, discount, method, ref, change }) => mapO(ok(await sb.rpc("place_order", { p_items: items.map(i => ({ product_id: i.id, qty: Math.floor(+i.qty) })), p_discount: Math.max(0, +discount || 0), p_method: method, p_ref: refOf(ref), p_change: Math.max(0, +change || 0) }))),
+  updateOrderMetadata: async (no, m) => ok(await sb.from("orders").update({ cashier_name: clean(m.cashier_name, 120) || null, customer_id: m.customer_id || null, promo_code: clean(m.promo_code, 50) || null, points_earned: Math.max(0, +m.points_earned || 0), points_redeemed: Math.max(0, +m.points_redeemed || 0), mdr_fee: Math.max(0, +m.mdr_fee || 0), offline_queued: !!m.offline_queued }).eq("order_no", no)),
+  createCustomer: async ({ name, phone }) => {
+    const row = ok(await sb.from("customers").insert({ store_id: storeId, name: clean(name, 120), phone: clean(phone, 30) }).select("id,name,phone,points").single());
+    return { id: row.id, name: row.name, phone: row.phone || "", email: "", points: +row.points || 0 };
+  },
+  updateCustomerPoints: async (id, delta) => {
+    if (!id) return null;
+    const row = ok(await sb.from("customers").select("points").eq("id", id).single());
+    return ok(await sb.from("customers").update({ points: Math.max(0, (+row.points || 0) + Math.trunc(+delta || 0)) }).eq("id", id));
+  },
+  saveStocktake: async (id, physical) => ok(await sb.from("products").update({ stock: Math.max(0, Math.floor(+physical || 0)) }).eq("id", id)),
   setStatus: async (no, status) => ok(await sb.from("orders").update({ status }).eq("order_no", no)),
   addExpense: async amt => ok(await sb.from("expenses").insert({ amount: Math.max(0.01, +amt || 0) })),
   submitPayment: async ({ o, ref, shot }) => {
