@@ -1,14 +1,16 @@
 {
   "name": "A’s Negosyo POS",
   "short_name": "Negosyo POS",
-  "description": "POS, inventory and orders for Philippine sellers.",
+  "description": "POS and inventory for 
+Pinoy sellers.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#0F766E",
-  "background_color": "#F8FAFC",
+  
+"background_color": "#F4F4F5",
+  "theme_color": "#18181B",
   "icons": [
-    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    { "src": "/logo.png", "sizes": "any", "type": "image/png", "purpose": "any" }
   ]
 }
