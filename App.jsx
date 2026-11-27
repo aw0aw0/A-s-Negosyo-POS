@@ -1,7 +1,7 @@
 
 import {useState,useMemo,useEffect,useRef} from "react";
 import {Html5Qrcode} from "html5-qrcode";
-import {LayoutDashboard,Receipt as ReceiptIcon,Package,Tag,Settings as SettingsIcon,Gem,ShieldCheck,ScanLine,Smartphone,Mail,Lock,Printer,Check,X,ArrowLeft,AlertTriangle,MessageSquare,CheckCircle2,Star,Eye,EyeOff,Copy,Trash2,ImagePlus} from "lucide-react";
+import {LayoutDashboard,Receipt as ReceiptIcon,Package,Tag,Settings as SettingsIcon,Gem,ShieldCheck,ScanLine,Smartphone,Mail,Lock,Printer,Check,X,ArrowLeft,AlertTriangle,MessageSquare,CheckCircle2,Star,Eye,EyeOff,Copy,Trash2,ImagePlus,Store,ShoppingCart,ClipboardList,Building2,Download,Sparkles} from "lucide-react";
 import {sb,live,cloud,envProblem,strip,clean,checkImage} from "./cloud.js";
 const peso=n=>"₱"+Number(n||0).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2});
 const seed=[
@@ -53,7 +53,7 @@ const verify=async()=>{let good=inp===code;if(live){try{await cloud.verifyOtp(ch
 const unOk=/^[a-zA-Z0-9]{1,8}$/.test(un);const taken=un&&(RESERVED.includes(un.toLowerCase())||users.some(u=>u.username.toLowerCase()===un.toLowerCase()));
 const pwErr=!pw?"":!/[A-Z]/.test(pw)?"Add at least 1 UPPERCASE letter.":!/[^A-Za-z0-9\s]/.test(pw)?"Add at least 1 special character (!@#$%^&*).":"";
 const match=pw.length>0&&pw===pw2;const credOk=unOk&&!taken&&pw&&!pwErr&&match;
-const finish=async()=>{const u={username:un,pw,phone:ch==="phone"?ph:"",email:ch==="phone"?"":em.trim(),shop:clean(shop,30),provider:prov};if(live){try{await cloud.claim(un,clean(shop,30),pw)}catch(e){const m=String(e.message||e);setSt("creds");return setErr(m.includes("username")?"That username is already taken.":m.includes("phone")?"That phone number is already registered.":m)}}else setUsers([...users,u]);onIn(u)};
+const finish=async()=>{const u={username:un,pw,phone:ch==="phone"?ph:"",email:ch==="phone"?"":em.trim(),shop:clean(shop,30),provider:prov};if(live){try{await cloud.claim(un,clean(shop,30),pw)}catch(e){const m=String(e.message||e);setSt("creds");return setErr(m.includes("username")?"That username is already taken.":m.includes("phone")?"That phone number is already registered.":m)}}else setUsers([...users,u]);onIn(u,true)};
 const Btn=({children,onClick,dis,ghost})=><button disabled={dis} onClick={onClick} className={"btn w-full disabled:opacity-40 "+(ghost?"ghost":"text-white")} style={ghost?{}:G}>{children}</button>;
 const Err=()=>err?<div className="text-sm text-red-500">{err}</div>:null;
 const Back=()=><button className="text-sm mu" onClick={()=>reset("")}><ArrowLeft size={14} className="inline -mt-0.5 mr-1.5"/>Back to sign-up options</button>;
@@ -61,7 +61,7 @@ return <div className="p-5 max-w-sm mx-auto pt-8">
 {st==="code"&&ch==="phone"&&bn&&!live&&<div className="fixed top-2 left-2 right-2 z-[60] max-w-sm mx-auto rounded-2xl p-3 text-sm shadow-lg" style={{background:"#14161a",color:"#fff"}}><div className="flex justify-between text-xs" style={{opacity:.7}}><span className="flex items-center gap-1"><MessageSquare size={12}/> Messages · now</span><button onClick={()=>setBn(false)} aria-label="Dismiss"><X size={14}/></button></div><div className="mt-1">{msg8(code)}</div></div>}
 <div className="text-center mb-5"><img src="/logo-full.png" alt="A’s Negosyo PH" className="w-32 h-32 mx-auto rounded-2xl object-contain" /><h1 className="text-2xl font-bold mt-2">A’s Negosyo POS</h1><p className="mu text-sm">POS at inventory para sa Pinoy sellers</p></div>
 <div className="card p-4 space-y-3">
-{st==="login"&&<><b>Log In</b><input className="inp" placeholder={live?"Email or phone":"Username, email or phone"} value={lid} onChange={e=>setLid(e.target.value)}/><PwField label="Password" value={lpw} onChange={setLpw} ac="current-password"/><button type="button" className="text-sm w-full text-right font-semibold" style={{color:"#0F766E"}} onClick={()=>{setErr("");setInfo("");setEm("");setSt("forgot")}}>Forgot Password?</button>{notice&&<div className="text-sm" style={{color:"#0F766E"}}>{notice}</div>}<Err/>
+{st==="login"&&<><b>Log In</b><input className="inp" placeholder={live?"Email or phone":"Username, email or phone"} value={lid} onChange={e=>setLid(e.target.value)}/><PwField label="Password" value={lpw} onChange={setLpw} ac="current-password"/><button type="button" className="text-sm w-full text-right font-semibold" style={{color:"#0F766E",display:"block",marginTop:14,marginBottom:14}} onClick={()=>{setErr("");setInfo("");setEm("");setSt("forgot")}}>Forgot Password?</button>{notice&&<div className="text-sm" style={{color:"#0F766E"}}>{notice}</div>}<Err/>
 <Btn onClick={login}>Log In</Btn><Btn ghost onClick={()=>reset("")}>Create an account</Btn>
 {!live&&<button className="text-sm mu w-full" onClick={()=>onIn(null)}>Skip to demo store as {role}</button>}</>}
 {st==="signup"&&<><b>Create your account</b><Err/>
@@ -226,13 +226,13 @@ return <div className="p-3 space-y-2"><div className="flex justify-between items
 {cash&&<p className="mu text-xs">Cashiers can’t edit stock counts or see costs.</p>}
 <button disabled={cash} className="btn w-full text-white disabled:opacity-40" style={{background:set.accent}} onClick={save}>Save</button></div></Modal>}</div>;}
 
-function Settings({set,setSet}){const up=async e=>{const fl=e.target.files[0];if(!fl)return;const bad=await checkImage(fl);if(bad){alert(bad);e.target.value="";return}const r=new FileReader();r.onload=async()=>{if(live){try{setSet({...set,qr:await cloud.uploadSellerQr(r.result)})}catch(e){alert(e.message)}}else setSet({...set,qr:r.result})};r.readAsDataURL(fl)};
+function Settings({set,setSet,onDeleteStore}){const up=async e=>{const fl=e.target.files[0];if(!fl)return;const bad=await checkImage(fl);if(bad){alert(bad);e.target.value="";return}const r=new FileReader();r.onload=async()=>{if(live){try{setSet({...set,qr:await cloud.uploadSellerQr(r.result)})}catch(e){alert(e.message)}}else setSet({...set,qr:r.result})};r.readAsDataURL(fl)};
 const f=(k,l)=><label className="block text-xs mu">{l}<input className="inp mt-1" value={set[k]} onChange={e=>setSet({...set,[k]:strip(e.target.value,120)})}/></label>;
 return <div className="p-3 space-y-3"><b>Store Customization</b><div className="card p-3 space-y-2"><label className="block text-xs mu"><span className="flex justify-between"><span>Store name</span><span>{set.name.length}/30</span></span><input className="inp mt-1" maxLength={30} value={set.name} onChange={e=>setSet({...set,name:strip(e.target.value,30)})}/></label>{f("addr","Branch address")}{f("phone","Contact number")}{f("tin","TIN / VAT note")}{f("foot","Receipt footer")}
 <label className="block text-xs mu">Brand accent color<input type="color" className="block mt-1" value={set.accent} onChange={e=>setSet({...set,accent:e.target.value})} style={{width:60,height:36}}/></label>
 <div className="text-xs mu">Thermal paper width<div className="flex gap-2 mt-1">{["58","80"].map(w=><button key={w} onClick={()=>setSet({...set,paper:w})} className={"btn flex-1 "+(set.paper===w?"text-white":"ghost")} style={set.paper===w?{background:set.accent}:{}}>{w}mm</button>)}</div></div></div>
 <div className="card p-3 space-y-2"><b className="text-sm">Payment QR Code (QR Ph / GCash / Maya)</b>{set.qr&&<img src={set.qr} alt="Your payment QR" style={{maxHeight:200}} className="rounded-lg"/>}
-<input type="file" accept="image/jpeg,image/png,image/webp" onChange={up} className="text-sm"/><p className="mu text-xs">Shown to customers at POS checkout when they pay by QR.</p></div></div>;}
+<input type="file" accept="image/jpeg,image/png,image/webp" onChange={up} className="text-sm"/><p className="mu text-xs">Shown to customers at POS checkout when they pay by QR.</p></div><DangerZone name={set.name} onDelete={onDeleteStore}/></div>;}
 
 let lastPay=0;
 const PL={free:{n:"Free Starter",m:0,y:0,r:0,f:["30 products/SKUs","Unlimited POS checkout and QR scan","Basic payment QR display","1 Owner login (1 branch)","Basic daily sales total","Watermarked receipts"]},
@@ -305,38 +305,143 @@ return <div className="p-5 max-w-sm mx-auto pt-8"><div className="text-center mb
 <p className="mu text-xs">Max 8 characters, with 1 uppercase letter and 1 special character.</p>{err&&<div className="text-sm text-red-500">{err}</div>}
 <button disabled={!ok||busy} className="btn w-full text-white disabled:opacity-40" style={{background:"#0F766E"}} onClick={save}>Save New Password</button></div></div>}
 
+const GOLD="#C2A36B",INK="#1E1E1E",RED="#D32F2F";
+
+/* ---------- 6. Danger Zone: two-step delete store ---------- */
+function DangerZone({name,onDelete}){const[open,setOpen]=useState(false);const[step,setStep]=useState(1);const[txt,setTxt]=useState("");const[busy,setBusy]=useState(false);const[err,setErr]=useState("");
+const need=(name||"").trim()||"DELETE";const match=txt.trim()===need;
+const close=()=>{if(busy)return;setOpen(false);setStep(1);setTxt("");setErr("")};
+const go=async()=>{if(!match||busy)return;setBusy(true);setErr("");try{await onDelete()}catch(e){setErr(friendly(e));setBusy(false)}};
+return <div className="card p-3 space-y-2" style={{borderColor:RED}}>
+<b className="flex items-center gap-1.5" style={{color:RED}}><AlertTriangle size={16}/> Danger Zone</b>
+<p className="mu text-xs">Deleting your store permanently removes its products, orders, expenses, and settings. This cannot be undone.</p>
+<button className="btn w-full text-white" style={{background:RED}} onClick={()=>setOpen(true)}><Trash2 size={15} className="inline -mt-0.5 mr-1.5"/>Delete Store</button>
+{open&&<Modal title={step===1?"Delete this store?":"Final confirmation"} onClose={close}>
+{step===1?<div className="space-y-3"><div className="text-sm">You are about to delete <b>{name||"this store"}</b>. The following will be permanently erased:</div>
+<ul className="text-sm mu list-disc pl-5"><li>All products, prices, photos, and stock counts</li><li>All orders, receipts, and sales history</li><li>Expenses, store settings, and payment QR</li></ul>
+<div className="flex gap-2"><button className="btn ghost flex-1" onClick={close}>Cancel</button><button className="btn flex-1 text-white" style={{background:RED}} onClick={()=>setStep(2)}>Continue</button></div></div>
+:<div className="space-y-3"><div className="text-sm">To confirm, type <b>{need}</b> below.</div>
+<input className="inp" autoCapitalize="none" autoComplete="off" placeholder={need} value={txt} onChange={e=>setTxt(e.target.value)} aria-label="Type store name to confirm"/>
+{err&&<div className="text-sm" style={{color:RED}}>{err}</div>}
+<div className="flex gap-2"><button className="btn ghost flex-1" disabled={busy} onClick={()=>{setStep(1);setTxt("");setErr("")}}>Back</button>
+<button className="btn flex-1 text-white disabled:opacity-40" style={{background:RED}} disabled={!match||busy} onClick={go}>{busy?"Deleting...":"Delete permanently"}</button></div></div>}
+</Modal>}</div>}
+
+/* ---------- 1. Post-registration walkthrough ---------- */
+const TOUR=[
+{I:Sparkles,t:"Welcome to A’s Negosyo PH POS",d:"Your cashier counter, inventory, and order tracker in one app, made for Pinoy sellers.",p:["Tap a product to ring up a sale in seconds","Stock deducts automatically at checkout","Print, share, or send receipts to customers"]},
+{I:Store,t:"Setting Up Your Store Profile",d:"Open Settings so your receipts and checkout look like your brand.",p:["Add your store name, address, contact number, and TIN note","Pick your brand color and 58mm or 80mm paper","Upload your GCash, Maya, or QR Ph code for QR payments"]},
+{I:Package,t:"Adding Products, Prices & Inventory",d:"Go to Inventory and tap + Product to build your catalog.",p:["Enter name, SKU or barcode, selling price, cost, and stock","Add up to 3 photos per product","Map your Shopee, Lazada, and TikTok SKUs","Items with 5 or fewer left show up as low stock"]},
+{I:ShoppingCart,t:"Ringing Up Sales & Checkout",d:"The POS tab is your counter.",p:["Tap a product or use Scan to add items to the cart","Apply a discount, then tap Checkout","Accept Cash (with automatic change) or QR Ph / GCash / Maya","Enter the customer’s reference number for QR payments"]},
+{I:ClipboardList,t:"Tracking Orders, Receipts & Sales History",d:"Every checkout becomes an order you can follow.",p:["Move orders from New to To Pack to Completed","Reopen any receipt to print or share it again","See sales, low stock, and net profit on the Dashboard","Export your orders to CSV on Negosyo Lite and up"]},
+{I:Star,t:"Building Trust with Seller Reviews",d:"The Reviews tab shows what customers say about your store.",p:["See your overall rating and review count","Verified badges mark confirmed buyers","Filter by stars, or collect a new review"]},
+{I:Building2,t:"Managing Multiple Stores & Settings",d:"Tap your store name at the top right anytime.",p:["Jump to Store Settings, Plans, and billing","Pro and Multi-Branch plans add staff logins and more branches","Need to start over? Settings has a protected Danger Zone"]},
+{I:Download,t:"Install the App & Get Ready to Sell",d:"Add A’s Negosyo POS to your home screen for one-tap access.",p:["Android: tap Install when prompted, or Chrome menu, then Install app","iPhone: Safari Share button, then Add to Home Screen","You’re all set. Time to make your first sale!"]}];
+function Walkthrough({onDone}){const[i,setI]=useState(0);const ref=useRef(null);const last=i===TOUR.length-1;
+const go=n=>{const el=ref.current;if(!el)return;const k=Math.max(0,Math.min(TOUR.length-1,n));el.scrollTo({left:k*el.clientWidth,behavior:"smooth"})};
+const onScroll=()=>{const el=ref.current;if(!el||!el.clientWidth)return;const k=Math.round(el.scrollLeft/el.clientWidth);if(k!==i)setI(k)};
+return <div className="fixed inset-0 z-[70] flex flex-col" style={{background:"var(--card)",paddingTop:"env(safe-area-inset-top,0px)",paddingBottom:"env(safe-area-inset-bottom,0px)"}} role="dialog" aria-label="App walkthrough">
+<style>{`.tour::-webkit-scrollbar{display:none}`}</style>
+<div className="flex items-center justify-between px-5 py-3"><span className="text-xs mu">{i+1} / {TOUR.length}</span>{!last?<button className="text-sm font-semibold px-2 py-1" style={{color:INK}} onClick={onDone}>Skip</button>:<span style={{height:28}}/>}</div>
+<div ref={ref} onScroll={onScroll} className="tour flex-1 flex overflow-x-auto overflow-y-hidden" style={{scrollSnapType:"x mandatory",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+{TOUR.map((s,n)=><section key={n} aria-label={s.t} className="h-full overflow-y-auto px-6 py-2 flex flex-col items-center justify-center text-center" style={{flex:"0 0 100%",scrollSnapAlign:"center",scrollSnapStop:"always"}}>
+<div className="rounded-full flex items-center justify-center mb-5" style={{width:88,height:88,background:INK}}><s.I size={40} color={GOLD}/></div>
+<h2 className="text-2xl font-bold" style={{color:INK}}>{s.t}</h2><p className="mu text-sm mt-2 max-w-xs">{s.d}</p>
+<ul className="text-sm text-left mt-5 space-y-2 max-w-xs w-full">{s.p.map(x=><li key={x} className="flex gap-2"><CheckCircle2 size={16} color={GOLD} className="shrink-0 mt-0.5"/><span>{x}</span></li>)}</ul></section>)}</div>
+<div className="px-5 pt-3 pb-5 space-y-4"><div className="flex justify-center gap-2">{TOUR.map((_,n)=><button key={n} aria-label={"Go to page "+(n+1)} onClick={()=>go(n)} style={{height:8,width:n===i?22:8,borderRadius:99,background:n===i?GOLD:"#D4D4D4",transition:"all .2s"}}/>)}</div>
+<div className="flex gap-3"><button className="btn ghost flex-1" style={{visibility:i===0?"hidden":"visible"}} onClick={()=>go(i-1)}>Back</button>
+{last?<button className="btn flex-1" style={{background:GOLD,color:INK}} onClick={onDone}>Get Started</button>:<button className="btn flex-1 text-white" style={{background:INK}} onClick={()=>go(i+1)}>Next</button>}</div></div></div>}
+
+/* ---------- 4. Install card ---------- */
+function InstallCard({ip,onClose,onDone}){const[help,setHelp]=useState(false);
+const go=async()=>{if(ip){try{ip.prompt();await ip.userChoice}catch(e){}onDone()}else setHelp(true)};
+return <div className="card mx-3 mt-2 p-3 space-y-2" style={{background:"#FAFAFA"}}>
+<div className="flex items-center gap-3"><img src="/logo.png" alt="" className="rounded-xl object-cover shrink-0" style={{width:44,height:44}}/>
+<div className="flex-1 min-w-0"><div className="text-sm font-bold">Install A’s Negosyo POS</div><div className="mu text-xs">Add to your home screen for faster checkout.</div></div>
+<button aria-label="Close" className="p-1 mu" onClick={()=>onClose(30)}><X size={18}/></button></div>
+{help&&<p className="text-xs mu">Open this page in your browser menu and choose <b>Install app</b> or <b>Add to Home Screen</b>. On iPhone, use Safari’s Share button, then Add to Home Screen.</p>}
+<div className="flex gap-2"><button className="btn ghost flex-1" onClick={()=>onClose(3)}>Not now</button><button className="btn flex-1" style={{background:GOLD,color:INK}} onClick={go}><Download size={15} className="inline -mt-0.5 mr-1.5"/>Install</button></div></div>}
+
+/* ---------- 3. Profile / store sheet ---------- */
+function ProfileSheet({set,role,plan,exp,cash,onClose,onGo,onLogout}){
+return <Modal title="Store & Profile" onClose={onClose}><div className="space-y-3">
+<div className="flex items-center gap-3"><div className="rounded-full flex items-center justify-center shrink-0" style={{width:48,height:48,background:INK,color:GOLD,fontWeight:700,fontSize:20}}>{(set.name||"A").trim().charAt(0).toUpperCase()}</div>
+<div className="min-w-0"><div className="font-bold truncate">{set.name}</div><div className="mu text-xs">{role} · {PL[plan].n}{exp?" · expires "+fmtD(exp):""}</div></div></div>
+{!cash&&<button className="btn ghost w-full text-left" onClick={()=>onGo("Settings")}><SettingsIcon size={16} className="inline -mt-0.5 mr-2"/>Store Settings</button>}
+{!cash&&<button className="btn ghost w-full text-left" onClick={()=>onGo("Plans")}><Gem size={16} className="inline -mt-0.5 mr-2"/>Plans & Billing</button>}
+<button className="btn w-full text-white" style={{background:INK}} onClick={onLogout}>Log out</button></div></Modal>}
+
+/* ---------- 5. Seller reviews ---------- */
+const seedReviews=[
+{id:1,name:"Maria S.",date:"2026-11-18",rating:5,verified:true,comment:"Mabilis ang transaction at laging kumpleto ang order. Sulit!"},
+{id:2,name:"Jun D.",date:"2026-11-09",rating:5,verified:true,comment:"Super bait ng seller, maayos ang packaging."},
+{id:3,name:"Liza R.",date:"2026-10-28",rating:4,verified:true,comment:"Okay ang produkto, medyo natagalan lang ang pickup."},
+{id:4,name:"Carlo M.",date:"2026-10-14",rating:3,verified:false,comment:"Maganda ang presyo pero sold out agad ang gusto ko."},
+{id:5,name:"Ana P.",date:"2026-09-30",rating:5,verified:true,comment:"Balik-balik ako dito. Salamat po!"}];
+function Stars({n,s=16}){return <span className="inline-flex" aria-label={n+" out of 5 stars"}>{[1,2,3,4,5].map(k=><Star key={k} size={s} color={GOLD} fill={k<=Math.round(n)?GOLD:"none"}/>)}</span>}
+function Reviews({reviews,setReviews}){const[f,setF]=useState("all");const[w,setW]=useState(false);const[nm,setNm]=useState("");const[rt,setRt]=useState(0);const[cm,setCm]=useState("");
+const n=reviews.length;const avg=n?reviews.reduce((a,r)=>a+r.rating,0)/n:0;const dist=[5,4,3,2,1].map(k=>reviews.filter(r=>r.rating===k).length);
+const shown=reviews.filter(r=>f==="all"||(f==="5"&&r.rating===5)||(f==="4"&&r.rating===4)||(f==="low"&&r.rating<=3)||(f==="ver"&&r.verified)).sort((a,b)=>new Date(b.date)-new Date(a.date));
+const submit=()=>{if(!rt||!clean(cm,300))return;setReviews([{id:Date.now(),name:clean(nm,30)||"Anonymous",date:new Date().toISOString(),rating:rt,verified:false,comment:clean(cm,300)},...reviews]);setW(false);setNm("");setRt(0);setCm("")};
+const chips=[["all","All"],["5","5★"],["4","4★"],["low","3★ & below"],["ver","Verified"]];
+return <div className="p-3 space-y-3">
+<div className="card p-4 flex items-center gap-4"><div className="text-center"><div className="text-4xl font-bold" style={{color:INK}}>{avg.toFixed(1)}</div><Stars n={avg} s={15}/><div className="mu text-xs mt-1">{n} review{n===1?"":"s"}</div></div>
+<div className="flex-1 space-y-1">{[5,4,3,2,1].map((k,x)=><div key={k} className="flex items-center gap-2 text-xs"><span className="w-3">{k}</span><div className="flex-1 rounded-full overflow-hidden" style={{height:6,background:"#EDEDED"}}><div style={{width:(n?dist[x]/n*100:0)+"%",height:"100%",background:GOLD}}/></div><span className="w-4 mu text-right">{dist[x]}</span></div>)}</div></div>
+<div className="flex gap-2 overflow-x-auto pb-1">{chips.map(([k,l])=><button key={k} onClick={()=>setF(k)} className="btn text-xs shrink-0" style={f===k?{background:INK,color:GOLD}:{border:"1px solid var(--bd)",background:"var(--card)"}}>{l}</button>)}</div>
+<button className="btn w-full" style={{background:GOLD,color:INK}} onClick={()=>setW(true)}>Write a review</button>
+{!shown.length&&<p className="mu text-center text-sm py-6">{n?"No reviews match this filter.":"No reviews yet."}</p>}
+{shown.map(r=><div key={r.id} className="rounded-2xl p-3 space-y-1.5" style={{background:"#FAFAFA",border:"1px solid var(--bd)"}}>
+<div className="flex justify-between items-center"><b className="text-sm">{r.name}</b><span className="mu text-xs">{fmtD(r.date)}</span></div>
+<div className="flex items-center gap-2"><Stars n={r.rating} s={14}/>{r.verified&&<span className="inline-flex items-center gap-1 text-xs font-semibold" style={{color:"#8A6D3B"}}><CheckCircle2 size={13} color={GOLD}/>Verified</span>}</div>
+<p className="text-sm">{r.comment}</p></div>)}
+{w&&<Modal title="Write a review" onClose={()=>setW(false)}><div className="space-y-3">
+<div className="flex justify-center gap-1">{[1,2,3,4,5].map(k=><button key={k} aria-label={k+" stars"} onClick={()=>setRt(k)}><Star size={32} color={GOLD} fill={k<=rt?GOLD:"none"}/></button>)}</div>
+<input className="inp" placeholder="Your name (optional)" maxLength={30} value={nm} onChange={e=>setNm(strip(e.target.value,30))}/>
+<textarea className="inp" rows={4} placeholder="Share your experience" maxLength={300} value={cm} onChange={e=>setCm(strip(e.target.value,300))}/>
+<button disabled={!rt||!cm.trim()} className="btn w-full disabled:opacity-40" style={{background:INK,color:"#fff"}} onClick={submit}>Submit review</button></div></Modal>}</div>}
+
 function App(){const[role,setRole]=useState("Owner");const[authed,setAuthed]=useState(false);const[tab,setTab]=useState("Dashboard");
 const[products,setProducts]=useState(live?[]:seed);const[orders,setOrders]=useState([]);const[expenses,setExpenses]=useState([]);const[set,setSet]=useState(defSet);
 const[stores,setStores]=useState([{id:"me",name:"",plan:"free",expires:null},{id:2,name:"Kuya Jun Sari-sari",plan:"pro",expires:new Date(Date.now()+20*864e5).toISOString()},{id:3,name:"Ate Mel Online Shop",plan:"lite",expires:new Date(Date.now()+5*864e5).toISOString()}]);
 const[payments,setPayments]=useState([]);const[users,setUsers]=useState([]);const[adminQr,setAdminQr]=useState("");const[upg,setUpg]=useState(null);
 const cash=role==="Cashier";const[adminOk,setAdminOk]=useState(false);const isAdmin=live?adminOk:role==="Super Admin";const me=stores.find(x=>x.id==="me");const plan=me.plan,exp=me.expires;PLAN=plan;const rank=PL[plan].r;const up=r=>setUpg(r||"");
-const tabs=[["Dashboard",LayoutDashboard],["POS",ReceiptIcon],["Orders",Package],["Inventory",Tag],...(cash?[]:[["Settings",SettingsIcon],["Plans",Gem]]),...(isAdmin?[["Admin",ShieldCheck]]:[])];
+const tabs=[["Dashboard",LayoutDashboard],["POS",ReceiptIcon],["Orders",Package],["Inventory",Tag],["Reviews",Star],...(cash?[]:[["Settings",SettingsIcon]]),...(isAdmin?[["Admin",ShieldCheck]]:[])];
 useEffect(()=>{const t=()=>setStores(ss=>ss.some(x=>x.expires&&new Date(x.expires)<new Date())?ss.map(x=>x.expires&&new Date(x.expires)<new Date()?{...x,plan:"free",expires:null}:x):ss);t();const i=setInterval(t,4000);return()=>clearInterval(i)},[]);
 useEffect(()=>{if((cash&&(tab==="Settings"||tab==="Plans"))||(!isAdmin&&tab==="Admin"))setTab("Dashboard")},[role,isAdmin]);
+const[tour,setTour]=useState(false);const[prof,setProf]=useState(false);const[reviews,setReviews]=useState(live?[]:seedReviews);
+const SNZ="asn-install-snooze";const[showInst,setShowInst]=useState(()=>{try{return Number(localStorage.getItem(SNZ)||0)<Date.now()}catch(e){return true}});const[ip,setIp]=useState(null);
+useEffect(()=>{const a=e=>{e.preventDefault();setIp(e)};const b=()=>{setIp(null);setShowInst(false)};window.addEventListener("beforeinstallprompt",a);window.addEventListener("appinstalled",b);return()=>{window.removeEventListener("beforeinstallprompt",a);window.removeEventListener("appinstalled",b)}},[]);
+const dismissInst=d=>{setShowInst(false);try{localStorage.setItem(SNZ,String(Date.now()+d*864e5))}catch(e){}};
+const standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true;
 const[pre,setPre]=useState(false);const[recovery,setRecovery]=useState(()=>live&&/type=recovery/.test(window.location.hash));const[notice,setNotice]=useState("");
-const wipe=()=>{setAuthed(false);setProducts(live?[]:seed);setOrders([]);setExpenses([]);setPayments([]);setAdminQr("");setUpg(null);setRole("Owner");setAdminOk(false);setTab("Dashboard");setSet(defSet);setStores([{id:"me",name:"",plan:"free",expires:null}])};
+const wipe=()=>{setAuthed(false);setProducts(live?[]:seed);setOrders([]);setExpenses([]);setPayments([]);setAdminQr("");setUpg(null);setRole("Owner");setAdminOk(false);setTab("Dashboard");setSet(defSet);setStores([{id:"me",name:"",plan:"free",expires:null}]);setTour(false);setProf(false);setReviews(live?[]:seedReviews)};
 const refresh=async()=>{try{const d=await cloud.loadAll();if(!d){setAuthed(false);return}if(!d.profile){setPre(true);setAuthed(false);return}
 setRole(d.profile.role==="super_admin"?"Super Admin":d.profile.role==="cashier"?"Cashier":"Owner");setProducts(d.products);setOrders(d.orders);setExpenses(d.expenses);setSet(d.set);setStores(d.stores);setPayments(d.payments);setAdminQr(d.adminQr);setAdminOk(d.profile.role==="super_admin");setPre(false);setAuthed(true)}catch(e){setAuthed(false)}};
+const deleteStore=async()=>{if(live){await cloud.deleteStore();await cloud.logout()}wipe();setNotice("Your store was deleted.")};
 useEffect(()=>{if(!live)return;refresh();const{data:l}=sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")wipe();else if(ev==="PASSWORD_RECOVERY")setRecovery(true);else if(ev==="SIGNED_IN")setTimeout(refresh,0)});return()=>l.subscription.unsubscribe()},[]);
 useEffect(()=>{if(!live||!authed||role==="Cashier")return;const t=setTimeout(()=>cloud.saveStore(set).catch(()=>{}),900);return()=>clearTimeout(t)},[set]);
 if(recovery&&live)return <ResetPassword onDone={async()=>{await cloud.logout();wipe();setRecovery(false);setNotice("Password updated. Please log in with your new password.");window.history.replaceState(null,"",window.location.pathname)}}/>;
 return <div className="max-w-xl mx-auto min-h-screen pb-20">
 <div className="sticky top-0 z-40 px-3 py-2 flex items-center gap-2" style={{background:"var(--card)",borderBottom:"1px solid var(--bd)"}}>
-<b className="flex-1 text-sm" style={{color:set.accent}}><img src="/logo.png" alt="A’s Negosyo PH" className="w-6 h-6 rounded-full object-cover inline -mt-0.5 mr-1.5" />A’s Negosyo POS</b>
+<div className="flex-1 flex items-center gap-2 min-w-0"><span className="relative shrink-0 rounded-full flex items-center justify-center text-sm font-bold" style={{width:28,height:28,background:INK,color:GOLD}}>A<img src="/logo.png" alt="" className="absolute inset-0 w-full h-full rounded-full object-cover" onError={e=>{e.currentTarget.style.display="none"}}/></span><b className="text-sm truncate" style={{color:INK}}>A’s Negosyo PH</b></div>
 {live||import.meta.env.PROD?<span className="text-xs mu">{role}</span>:<select className="inp" style={{width:130,padding:"6px 8px"}} value={role} onChange={e=>setRole(e.target.value)} aria-label="Demo role"><option>Owner</option><option>Cashier</option><option>Super Admin</option></select>}
-{authed&&<button className="btn ghost py-1" onClick={async()=>{if(live)await cloud.logout();wipe()}}>Out</button>}</div>
-{!authed?<Auth pre={pre} notice={notice} role={role} users={users} setUsers={setUsers} onIn={u=>{if(live){refresh();return}if(u&&u.shop)setSet(x=>({...x,name:u.shop}));setAuthed(true)}}/>:<>
+{authed&&<button aria-label="Store and profile" className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold" style={{background:INK,color:GOLD,maxWidth:130}} onClick={()=>setProf(true)}><Store size={14} className="shrink-0"/><span className="truncate">{set.name}</span></button>}</div>
+{!authed?<Auth pre={pre} notice={notice} role={role} users={users} setUsers={setUsers} onIn={(u,fresh)=>{if(fresh)setTour(true);if(live){refresh();return}if(u&&u.shop)setSet(x=>({...x,name:u.shop}));setAuthed(true)}}/>:<>
 <div className="px-3 pt-2 text-xs mu">Plan: <b>{PL[plan].n}</b>{exp?" · expires "+fmtD(exp):""}{plan==="free"&&!cash&&<button className="ml-2 font-bold" style={{color:"#D97706"}} onClick={()=>up("")}>Upgrade</button>}</div>
+{showInst&&!standalone&&!tour&&<InstallCard ip={ip} onClose={dismissInst} onDone={()=>dismissInst(365)}/>}
 {tab==="Dashboard"&&<Dashboard {...{orders,products,expenses,setExpenses,role,set,rank,up}}/>}
 {tab==="POS"&&<POS {...{products,setProducts,orders,setOrders,set,role,rank,up,goSettings:()=>setTab("Settings")}}/>}
 {tab==="Orders"&&<Orders {...{orders,setOrders,set,rank,up}}/>}
 {tab==="Inventory"&&<Inventory {...{products,setProducts,role,set,rank,up}}/>}
-{tab==="Settings"&&!cash&&<Settings {...{set,setSet}}/>}
+{tab==="Reviews"&&<Reviews {...{reviews,setReviews}}/>}
+{tab==="Settings"&&!cash&&<Settings {...{set,setSet,onDeleteStore:deleteStore}}/>}
 {tab==="Plans"&&!cash&&<PlansTab {...{plan,exp,rank,up}}/>}
 {tab==="Admin"&&isAdmin&&<Admin {...{stores:stores.map(x=>x.id==="me"?{...x,name:set.name}:x),setStores,payments,setPayments,adminQr,setAdminQr}}/>}
+{prof&&<ProfileSheet {...{set,role,plan,exp,cash,onClose:()=>setProf(false),onGo:t=>{setProf(false);setTab(t)},onLogout:async()=>{setProf(false);if(live)await cloud.logout();wipe()}}}/>}
+{tour&&<Walkthrough onDone={()=>setTour(false)}/>}
 {upg!==null&&<Upgrade {...{reason:upg,onClose:()=>setUpg(null),store:set.name,rank,payments,setPayments,adminQr}}/>}
 <nav className="fixed bottom-0 left-0 right-0 z-40" style={{background:"var(--card)",borderTop:"1px solid var(--bd)",paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
-<div className="max-w-xl mx-auto flex">{tabs.map(([t,Ic])=><button key={t} onClick={()=>setTab(t)} className="flex-1 py-2 text-xs" style={{color:tab===t?set.accent:"var(--mu)",fontWeight:tab===t?700:400}}><Ic size={20} className="mx-auto mb-0.5"/>{t}</button>)}</div></nav></>}
+<div className="max-w-xl mx-auto flex gap-1 p-1.5">{tabs.map(([t,Ic])=><button key={t} onClick={()=>setTab(t)} aria-current={tab===t?"page":undefined} className="flex-1 rounded-xl py-1.5" style={{fontSize:10,background:tab===t?INK:"transparent",color:tab===t?GOLD:"var(--mu)",fontWeight:tab===t?700:500}}><Ic size={20} className="mx-auto mb-0.5"/>{t}</button>)}</div></nav></>}
 </div>;}
 function ConfigError(){return <div className="card p-5 m-5 max-w-md mx-auto mt-16"><h1 className="text-lg font-bold">Setup required</h1><p className="mu text-sm mt-2">{envProblem||"This app is missing its Supabase configuration."}</p><p className="mu text-sm mt-2">In Vercel, open Settings, then Environment Variables. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (anon key only), then redeploy.</p></div>}
 export default function Root(){if(import.meta.env.PROD&&!live)return <ConfigError/>;return <App/>}
