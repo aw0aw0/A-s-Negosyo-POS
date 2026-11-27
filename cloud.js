@@ -97,6 +97,7 @@ export const cloud = {
     ownerId = profile.owner_id;
     const st = ok(await sb.from("stores").select("*").eq("owner_id", ownerId).maybeSingle());
     storeId = st?.id;
+    if (!st) return { profile: null };
     const [products, orders, stores, payments, ex, ps] = await Promise.all([
       cloud.products(), cloud.orders(), cloud.stores(), cloud.payments(),
       sb.from("expenses").select("amount").order("created_at"),
@@ -130,6 +131,10 @@ export const cloud = {
     ok(await sb.from("subscription_payments").insert({ item: o.label, plan: o.plan, addon: o.plan ? null : o.key, days: o.days, amount: o.amt, reference_no: r, screenshot_path: path }));
   },
   deleteProduct: async id => ok(await sb.from("products").delete().eq("id", id)),
+  deleteStore: async () => {
+    if (!storeId) throw new Error("No store to delete.");
+    ok(await sb.rpc("delete_my_store", { p_store_id: storeId }));
+  },
   uploadProductImage: async blob => {
     if (blob.type !== "image/jpeg" || blob.size > MAX || !storeId) throw new Error("Invalid image file.");
     const path = storeId + "/" + crypto.randomUUID() + ".jpg";
