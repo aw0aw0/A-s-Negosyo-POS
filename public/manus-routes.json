@@ -1,1 +1,1 @@
-{"routes":[{"path":"/","title":"POS"},{"path":"/display","title":"Customer Display"},{"path":"/kitchen","title":"Kitchen Display"}]}
+{"routes":[{"path":"/","title":"POS"},{"path":"/display","title":"Customer Display"},{"path":"/kitchen","title":"Kitchen Display"},{"path":"/shop/:storeSlug","title":"Online Storefront"}]}
