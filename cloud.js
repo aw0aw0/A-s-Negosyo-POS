@@ -102,13 +102,25 @@ export const cloud = {
     return { id: row.id, name: row.name || "", logo: "/logo-full.png", qr: safeImg(row.payment_qr_url) || safeImg(row.qr_url), promos, slug: row.slug || row.id, allow_cod: row.allow_cod !== false };
   },
   publicStore: async slug => {
-    let row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active").eq("slug", slug).eq("online_store_active", true).maybeSingle());
-    if (!row && /^[0-9a-f-]{36}$/i.test(slug)) row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active").eq("id", slug).eq("online_store_active", true).maybeSingle());
+    let row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active,gcash_details,maya_details,bank_details").eq("slug", slug).eq("online_store_active", true).maybeSingle());
+    if (!row && /^[0-9a-f-]{36}$/i.test(slug)) row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active,gcash_details,maya_details,bank_details").eq("id", slug).eq("online_store_active", true).maybeSingle());
     if (!row) return null;
     const products = ok(await sb.from("products").select("id,store_id,sku,name,price,stock,category,unit,description,image_url,images").eq("store_id", row.id).eq("active", true).gt("stock", 0).order("name").limit(500)).map(mapP);
     return { ...row, qr: safeImg(row.payment_qr_url) || safeImg(row.qr_url), products };
   },
-  placeOnlineOrder: async p => ok(await sb.rpc("place_online_order", { p_store_slug: p.storeSlug, p_items: p.items.map(i => ({ product_id: i.id, qty: Math.floor(+i.qty) })), p_customer_name: clean(p.customerName, 120), p_customer_phone: clean(p.customerPhone, 30), p_fulfillment_method: p.fulfillment, p_delivery_address: clean(p.address, 240), p_order_notes: clean(p.notes, 240), p_payment_method: p.paymentMethod, p_reference_no: p.reference || null }))[0],
+  placeOnlineOrder: async p => ok(await sb.rpc("place_online_order", { p_store_slug: p.storeSlug, p_items: p.items.map(i => ({ product_id: i.id, qty: Math.floor(+i.qty) })), p_customer_name: clean(p.customerName, 120), p_customer_phone: clean(p.customerPhone, 30), p_fulfillment_method: p.fulfillment, p_delivery_address: clean(p.address, 240), p_order_notes: clean(p.notes, 240), p_payment_method: p.paymentMethod, p_reference_no: p.reference || null, p_receipt_path: p.receiptPath || null }))[0],
+  trackOnlineOrder: async (orderNo, phone) => ok(await sb.rpc("track_online_order", { p_order_no: Number(orderNo), p_phone: clean(phone, 30) }))[0] || null,
+  uploadGuestReceipt: async file => {
+    const bad = await checkImage(file);
+    if (bad) throw new Error(bad);
+    const path = "guest/" + crypto.randomUUID() + "." + TYPES[file.type];
+    const r = await sb.storage.from("storefront-receipts").upload(path, file, { upsert: false, contentType: file.type });
+    if (r.error) throw r.error;
+    return path;
+  },
+  adminOrders: async () => ok(await sb.from("orders").select("order_no,status,method,payment_method,reference_no,payment_receipt_path,total,created_at,customer_name,customer_phone,fulfillment_method,delivery_address,order_notes,source,order_items(product_id,name,price,qty)").eq("source", "online_storefront").order("created_at", { ascending: false }).limit(300)),
+  updateOnlineOrderStatus: async (orderNo, status) => ok(await sb.from("orders").update({ status }).eq("order_no", orderNo).eq("source", "online_storefront")),
+  receiptUrl: async path => path ? safeImg((await sb.storage.from("storefront-receipts").createSignedUrl(path, 600)).data?.signedUrl) : "",
   kitchenOrders: async id => {
     let q = sb.from("orders").select("order_no,status,method,total,created_at,cashier_name,customer_id,order_items(order_id,product_id,name,qty,price)").eq("store_id", id).gte("created_at", new Date(new Date().setHours(0,0,0,0)).toISOString()).order("created_at", { ascending: true }).limit(300);
     return (await q).data?.map(mapO) || [];
@@ -140,12 +152,12 @@ export const cloud = {
       expenses: (ex.data || []).map(e => ({ amt: +e.amount })),
       adminQr: safeImg(ps.data?.value),
       storeId: st.id,
-      set: { name: st.name, addr: st.address || "", phone: st.phone || "", tin: st.tin_note || "", foot: st.receipt_footer || "", accent: st.accent, qr: safeImg(st.payment_qr_url) || safeImg(st.qr_url), paper: st.paper_width, allow_cod: st.allow_cod !== false, online_store_active: st.online_store_active !== false, slug: st.slug || st.id },
+      set: { name: st.name, addr: st.address || "", phone: st.phone || "", tin: st.tin_note || "", foot: st.receipt_footer || "", accent: st.accent, qr: safeImg(st.payment_qr_url) || safeImg(st.qr_url), paper: st.paper_width, allow_cod: st.allow_cod !== false, online_store_active: st.online_store_active !== false, slug: st.slug || st.id, gcash_details: st.gcash_details || "", maya_details: st.maya_details || "", bank_details: st.bank_details || "" },
     };
   },
   saveStore: async s => ok(await sb.from("stores").update({
     name: clean(s.name, 30) || "My Store", address: clean(s.addr), phone: clean(s.phone, 30), tin_note: clean(s.tin, 80), receipt_footer: clean(s.foot),
-    accent: /^#[0-9a-fA-F]{6}$/.test(s.accent) ? s.accent : "#0F766E", paper_width: s.paper === "80" ? "80" : "58", qr_url: safeImg(s.qr) || null, payment_qr_url: safeImg(s.qr) || null, allow_cod: s.allow_cod !== false, online_store_active: s.online_store_active !== false,
+    accent: /^#[0-9a-fA-F]{6}$/.test(s.accent) ? s.accent : "#0F766E", paper_width: s.paper === "80" ? "80" : "58", qr_url: safeImg(s.qr) || null, payment_qr_url: safeImg(s.qr) || null, allow_cod: s.allow_cod !== false, online_store_active: s.online_store_active !== false, gcash_details: clean(s.gcash_details, 240), maya_details: clean(s.maya_details, 240), bank_details: clean(s.bank_details, 240),
   }).eq("owner_id", ownerId)),
   uploadSellerQr: async d => (await upload("seller-qr", me, d)).url,
   saveProduct: async p => ok(await sb.from("products").upsert({
