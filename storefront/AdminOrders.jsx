@@ -41,7 +41,7 @@ export default function AdminOrders() {
       {error && <p className="err">{error}</p>}
       {!orders.length && <Message>No online orders yet.</Message>}
       {orders.map(o => <div className="card p-4 space-y-3" key={o.order_no}>
-        <div className="flex justify-between gap-3"><div><b>#{o.order_no}</b><p className="mu text-sm">{o.customer_name || "Guest"} · {o.customer_phone || "No phone"}</p></div><strong>{peso(o.total)}</strong></div>
+        <div className="flex justify-between gap-3"><div><b>#{o.order_no}</b><p className="mu text-sm">{o.customer_name || "Guest"} · {o.customer_phone || "No phone"}</p></div><strong>{peso(o.total, o.currency_code)}</strong></div>
         <p className="text-sm">{o.payment_method || "Payment not specified"}{o.reference_no && ` · Ref ${o.reference_no}`}</p>
         <div className="flex gap-2 flex-wrap"><button className="btn ghost" onClick={() => inspect(o)}><Eye size={16} />Inspect</button>{statuses.map(s => <button key={s} className={`btn ${statusLabel(o.status) === s ? "primary" : "ghost"}`} onClick={() => update(o, s)}><Check size={14} />{s}</button>)}</div>
         {selected?.order_no === o.order_no && <div className="border-t pt-3 text-sm space-y-2"><p><b>Fulfillment:</b> {o.fulfillment_method || o.method} {o.delivery_address && `· ${o.delivery_address}`}</p><p><b>Notes:</b> {o.order_notes || "None"}</p>{receipt ? <a href={receipt} target="_blank" rel="noreferrer"><img src={receipt} alt="Uploaded payment receipt" className="max-w-xs max-h-72 rounded-lg object-contain" /></a> : <p className="mu">No receipt screenshot uploaded.</p>}</div>}

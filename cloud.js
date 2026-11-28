@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { detectRegion } from "./currency.js";
 
 // Only the public anon key belongs in the browser. Never use a service_role / secret key here.
 const url = import.meta.env.VITE_SUPABASE_URL;
@@ -70,9 +71,9 @@ const safeImg = u => (typeof u === "string" && /^https:\/\/[a-z0-9-]+\.supabase\
 
 const imgsOf = r => { const a = Array.isArray(r.images) ? r.images : []; return (a.length ? a : r.image_url ? [r.image_url] : []).map(safeImg).filter(Boolean).slice(0, 3); };
 const mapP = r => ({ id: r.id, store_id: r.store_id, sku: r.sku, name: r.name, price: +r.price, cost: +r.cost, stock: r.stock, active: r.active !== false, category: r.category || "", unit: r.unit || "pc", description: r.description || "", expiry_date: r.expiry_date || "", batch_number: r.batch_number || "", serial_numbers: Array.isArray(r.serial_numbers) ? r.serial_numbers : (r.serial_numbers ? String(r.serial_numbers).split(",").map(x => x.trim()).filter(Boolean) : []), shopee: r.shopee_sku || "", lazada: r.lazada_sku || "", tiktok: r.tiktok_sku || "", images: imgsOf(r) });
-const mapO = o => ({ id: o.order_no, items: (o.order_items || []).map(i => ({ id: i.product_id, name: i.name, price: +i.price, cost: +i.cost, qty: i.qty })), subtotal: +o.subtotal, discount: +o.discount, total: +o.total, cogs: +o.cogs, method: o.method, ref: o.reference_no || "", change: +o.cash_change, status: o.status, created_at: o.created_at, time: new Date(o.created_at).toLocaleString("en-PH"), cashier_name: o.cashier_name || "Unknown", customer_id: o.customer_id || "", promo_code: o.promo_code || "", points_earned: +o.points_earned || 0, points_redeemed: +o.points_redeemed || 0, mdr_fee: +o.mdr_fee || 0, offline_queued: !!o.offline_queued });
+const mapO = o => ({ id: o.order_no, items: (o.order_items || []).map(i => ({ id: i.product_id, name: i.name, price: +i.price, cost: +i.cost, qty: i.qty })), subtotal: +o.subtotal, discount: +o.discount, total: +o.total, cogs: +o.cogs, method: o.method, ref: o.reference_no || "", change: +o.cash_change, status: o.status, created_at: o.created_at, time: new Date(o.created_at).toLocaleString(), cashier_name: o.cashier_name || "Unknown", customer_id: o.customer_id || "", promo_code: o.promo_code || "", points_earned: +o.points_earned || 0, points_redeemed: +o.points_redeemed || 0, mdr_fee: +o.mdr_fee || 0, offline_queued: !!o.offline_queued });
 const eff = s => (s.plan_expires_at && new Date(s.plan_expires_at) < new Date() ? "free" : s.plan);
-const mapS = s => ({ id: s.owner_id === ownerId ? "me" : s.id, name: s.name, plan: eff(s), expires: eff(s) === "free" ? null : s.plan_expires_at });
+const mapS = s => ({ id: s.owner_id === ownerId ? "me" : s.id, name: s.name, plan: eff(s), expires: eff(s) === "free" ? null : s.plan_expires_at, country_code: s.country_code || "", currency_code: s.currency_code || "" });
 const signed = async p => (p ? safeImg((await sb.storage.from("payment-screenshots").createSignedUrl(p, 600)).data?.signedUrl) : "");
 
 export const cloud = {
@@ -96,20 +97,25 @@ export const cloud = {
   products: async () => ok(await sb.from("products").select("*").order("created_at")).map(mapP),
   orders: async () => ok(await sb.from("orders").select("*,order_items(*)").order("created_at", { ascending: false }).limit(300)).map(mapO),
   displayStore: async id => {
-    const row = ok(await sb.from("stores").select("id,name,qr_url,payment_qr_url,slug,allow_cod,online_store_active").eq("id", id).maybeSingle());
+    const row = ok(await sb.from("stores").select("id,name,qr_url,payment_qr_url,slug,allow_cod,online_store_active,country_code,currency_code,paypal_me_url,paypal_email,bank_details").eq("id", id).maybeSingle());
     if (!row) return null;
     const promos = (await sb.from("promotions").select("name,code,type,value").eq("store_id", id).eq("active", true).limit(20)).data || [];
-    return { id: row.id, name: row.name || "", logo: "/logo-full.png", qr: safeImg(row.payment_qr_url) || safeImg(row.qr_url), promos, slug: row.slug || row.id, allow_cod: row.allow_cod !== false };
+    return { id: row.id, name: row.name || "", logo: "/logo-full.png", qr: safeImg(row.payment_qr_url) || safeImg(row.qr_url), promos, slug: row.slug || row.id, allow_cod: row.allow_cod !== false, country_code: row.country_code || "", currency_code: row.currency_code || "", paypal_me_url: row.paypal_me_url || "", paypal_email: row.paypal_email || "", bank_details: row.bank_details || "" };
   },
   publicStore: async slug => {
-    let row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active,gcash_details,maya_details,bank_details").eq("slug", slug).eq("online_store_active", true).maybeSingle());
-    if (!row && /^[0-9a-f-]{36}$/i.test(slug)) row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active,gcash_details,maya_details,bank_details").eq("id", slug).eq("online_store_active", true).maybeSingle());
+    let row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active,gcash_details,maya_details,bank_details,country_code,currency_code,paypal_me_url,paypal_email").eq("slug", slug).eq("online_store_active", true).maybeSingle());
+    if (!row && /^[0-9a-f-]{36}$/i.test(slug)) row = ok(await sb.from("stores").select("id,name,address,phone,qr_url,payment_qr_url,slug,allow_cod,online_store_active,gcash_details,maya_details,bank_details,country_code,currency_code,paypal_me_url,paypal_email").eq("id", slug).eq("online_store_active", true).maybeSingle());
     if (!row) return null;
     const products = ok(await sb.from("products").select("id,store_id,sku,name,price,stock,category,unit,description,image_url,images").eq("store_id", row.id).eq("active", true).gt("stock", 0).order("name").limit(500)).map(mapP);
     return { ...row, qr: safeImg(row.payment_qr_url) || safeImg(row.qr_url), products };
   },
   placeOnlineOrder: async p => ok(await sb.rpc("place_online_order", { p_store_slug: p.storeSlug, p_items: p.items.map(i => ({ product_id: i.id, qty: Math.floor(+i.qty) })), p_customer_name: clean(p.customerName, 120), p_customer_phone: clean(p.customerPhone, 30), p_fulfillment_method: p.fulfillment, p_delivery_address: clean(p.address, 240), p_order_notes: clean(p.notes, 240), p_payment_method: p.paymentMethod, p_reference_no: p.reference || null, p_receipt_path: p.receiptPath || null }))[0],
-  trackOnlineOrder: async (orderNo, phone) => ok(await sb.rpc("track_online_order", { p_order_no: Number(orderNo), p_phone: clean(phone, 30) }))[0] || null,
+  trackOnlineOrder: async (orderNo, phone) => {
+    const row = ok(await sb.rpc("track_online_order", { p_order_no: Number(orderNo), p_phone: clean(phone, 30) }))[0] || null;
+    if (!row?.store_id) return row;
+    const store = (await sb.from("stores").select("country_code,currency_code").eq("id", row.store_id).maybeSingle()).data;
+    return { ...row, country_code: store?.country_code || "", currency_code: store?.currency_code || "" };
+  },
   uploadGuestReceipt: async file => {
     const bad = await checkImage(file);
     if (bad) throw new Error(bad);
@@ -118,7 +124,13 @@ export const cloud = {
     if (r.error) throw r.error;
     return path;
   },
-  adminOrders: async () => ok(await sb.from("orders").select("order_no,status,method,payment_method,reference_no,payment_receipt_path,total,created_at,customer_name,customer_phone,fulfillment_method,delivery_address,order_notes,source,order_items(product_id,name,price,qty)").eq("source", "online_storefront").order("created_at", { ascending: false }).limit(300)),
+  adminOrders: async () => {
+    const rows = ok(await sb.from("orders").select("store_id,order_no,status,method,payment_method,reference_no,payment_receipt_path,total,created_at,customer_name,customer_phone,fulfillment_method,delivery_address,order_notes,source,order_items(product_id,name,price,qty)").eq("source", "online_storefront").order("created_at", { ascending: false }).limit(300));
+    const ids = [...new Set(rows.map(r => r.store_id).filter(Boolean))];
+    const stores = ids.length ? (await sb.from("stores").select("id,country_code,currency_code").in("id", ids)).data || [] : [];
+    const byId = Object.fromEntries(stores.map(st => [st.id, st]));
+    return rows.map(r => ({ ...r, country_code: byId[r.store_id]?.country_code || "", currency_code: byId[r.store_id]?.currency_code || "" }));
+  },
   updateOnlineOrderStatus: async (orderNo, status) => ok(await sb.from("orders").update({ status }).eq("order_no", orderNo).eq("source", "online_storefront")),
   receiptUrl: async path => path ? safeImg((await sb.storage.from("storefront-receipts").createSignedUrl(path, 600)).data?.signedUrl) : "",
   kitchenOrders: async id => {
@@ -130,7 +142,7 @@ export const cloud = {
   stores: async () => ok(await sb.from("stores").select("*").order("created_at")).map(mapS),
   payments: async () => {
     const rows = ok(await sb.from("subscription_payments").select("*,stores(name)").order("created_at", { ascending: false }).limit(100));
-    return Promise.all(rows.map(async r => ({ id: r.id, store: r.stores?.name || "", item: r.item, plan: r.plan, days: r.days, amt: +r.amount, ref: r.reference_no, shot: await signed(r.screenshot_path), status: r.status })));
+    return Promise.all(rows.map(async r => ({ id: r.id, store: r.stores?.name || "", item: r.item, plan: r.plan, days: r.days, amt: +r.amount, ref: r.reference_no, shot: await signed(r.screenshot_path), status: r.status, paymentMethod: r.payment_method || "qr_ph", currencyCode: r.currency_code || "PHP" })));
   },
   loadAll: async () => {
     const { data: { user } } = await sb.auth.getUser();
@@ -142,22 +154,29 @@ export const cloud = {
     const st = ok(await sb.from("stores").select("*").eq("owner_id", ownerId).maybeSingle());
     storeId = st?.id;
     if (!st) return { profile: null };
-    const [products, orders, stores, payments, customers, promotions, ex, ps] = await Promise.all([
+    const [products, orders, stores, payments, customers, promotions, ex, platformSettings] = await Promise.all([
       cloud.products(), cloud.orders(), cloud.stores(), cloud.payments(), cloud.customers(), cloud.promotions(),
       sb.from("expenses").select("amount").order("created_at"),
-      sb.from("platform_settings").select("*").eq("key", "palawanpay_qr_url").maybeSingle(),
+      sb.from("platform_settings").select("key,value").in("key", ["palawanpay_qr_url", "international_payment_details"]),
     ]);
+    const settingRows = platformSettings.data || [];
+    const qrRow = settingRows.find(r => r.key === "palawanpay_qr_url");
+    const paymentRow = settingRows.find(r => r.key === "international_payment_details");
+    let internationalPaymentDetails = {};
+    try { internationalPaymentDetails = JSON.parse(paymentRow?.value || "{}"); } catch { internationalPaymentDetails = {}; }
+    const detectedRegion = detectRegion();
     return {
       profile, products, orders, stores, payments, customers, promotions,
       expenses: (ex.data || []).map(e => ({ amt: +e.amount })),
-      adminQr: safeImg(ps.data?.value),
+      adminQr: safeImg(qrRow?.value),
+      internationalPaymentDetails,
       storeId: st.id,
-      set: { name: st.name, addr: st.address || "", phone: st.phone || "", tin: st.tin_note || "", foot: st.receipt_footer || "", accent: st.accent, qr: safeImg(st.payment_qr_url) || safeImg(st.qr_url), paper: st.paper_width, allow_cod: st.allow_cod !== false, online_store_active: st.online_store_active !== false, slug: st.slug || st.id, gcash_details: st.gcash_details || "", maya_details: st.maya_details || "", bank_details: st.bank_details || "" },
+      set: { name: st.name, addr: st.address || "", phone: st.phone || "", tin: st.tin_note || "", foot: st.receipt_footer || "", accent: st.accent, qr: safeImg(st.payment_qr_url) || safeImg(st.qr_url), paper: st.paper_width, allow_cod: st.allow_cod !== false, online_store_active: st.online_store_active !== false, slug: st.slug || st.id, gcash_details: st.gcash_details || "", maya_details: st.maya_details || "", bank_details: st.bank_details || "", country_code: st.country_code || "", currency_code: st.currency_code || "", detected_country_code: detectedRegion.country_code, detected_currency_code: detectedRegion.currency_code, paypal_me_url: st.paypal_me_url || "", paypal_email: st.paypal_email || "" },
     };
   },
   saveStore: async s => ok(await sb.from("stores").update({
     name: clean(s.name, 30) || "My Store", address: clean(s.addr), phone: clean(s.phone, 30), tin_note: clean(s.tin, 80), receipt_footer: clean(s.foot),
-    accent: /^#[0-9a-fA-F]{6}$/.test(s.accent) ? s.accent : "#0F766E", paper_width: s.paper === "80" ? "80" : "58", qr_url: safeImg(s.qr) || null, payment_qr_url: safeImg(s.qr) || null, allow_cod: s.allow_cod !== false, online_store_active: s.online_store_active !== false, gcash_details: clean(s.gcash_details, 240), maya_details: clean(s.maya_details, 240), bank_details: clean(s.bank_details, 240),
+    accent: /^#[0-9a-fA-F]{6}$/.test(s.accent) ? s.accent : "#0F766E", paper_width: s.paper === "80" ? "80" : "58", qr_url: safeImg(s.qr) || null, payment_qr_url: safeImg(s.qr) || null, allow_cod: s.allow_cod !== false, online_store_active: s.online_store_active !== false, gcash_details: clean(s.gcash_details, 240), maya_details: clean(s.maya_details, 240), bank_details: clean(s.bank_details, 240), country_code: /^[A-Z]{2}$/.test(s.country_code) ? s.country_code : null, currency_code: s.currency_code || null, paypal_me_url: clean(s.paypal_me_url, 200) || null, paypal_email: clean(s.paypal_email, 254) || null,
   }).eq("owner_id", ownerId)),
   uploadSellerQr: async d => (await upload("seller-qr", me, d)).url,
   saveProduct: async p => ok(await sb.from("products").upsert({
@@ -185,7 +204,7 @@ export const cloud = {
     const r = refOf(ref);
     if (!/^[A-Za-z0-9-]{4,40}$/.test(r)) throw new Error("Enter a valid reference number.");
     const { path } = await upload("payment-screenshots", me, shot);
-    ok(await sb.from("subscription_payments").insert({ item: o.label, plan: o.plan, addon: o.plan ? null : o.key, days: o.days, amount: o.amt, reference_no: r, screenshot_path: path }));
+    ok(await sb.from("subscription_payments").insert({ item: o.label, plan: o.plan, addon: o.plan ? null : o.key, days: o.days, amount: o.amt, reference_no: r, screenshot_path: path, payment_method: o.paymentMethod || "qr_ph", currency_code: o.currencyCode || "PHP" }));
   },
   deleteProduct: async id => ok(await sb.from("products").delete().eq("id", id)),
   deleteStore: async () => {
@@ -203,6 +222,11 @@ export const cloud = {
   updatePassword: async password => { const r = await sb.auth.updateUser({ password }); if (r.error) throw r.error; },
   approve: async (id, days) => ok(await sb.rpc("approve_payment", { p_id: id, p_days: days === 365 ? 365 : 30 })),
   reject: async id => ok(await sb.rpc("reject_payment", { p_id: id })),
+  setInternationalPaymentDetails: async details => {
+    const value = JSON.stringify({ paypal_me_url: clean(details.paypal_me_url, 200), paypal_email: clean(details.paypal_email, 254), bank_name: clean(details.bank_name, 120), account_name: clean(details.account_name, 120), account_number: clean(details.account_number, 120), swift_bic: clean(details.swift_bic, 20), notes: clean(details.notes, 500) });
+    ok(await sb.from("platform_settings").upsert({ key: "international_payment_details", value, updated_by: me, updated_at: new Date().toISOString() }));
+    return JSON.parse(value);
+  },
   setAdminQr: async d => {
     const { url: u } = await upload("admin-qr", "platform", d);
     ok(await sb.from("platform_settings").upsert({ key: "palawanpay_qr_url", value: u, updated_by: me, updated_at: new Date().toISOString() }));
